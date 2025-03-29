@@ -1,0 +1,427 @@
+---
+sidebar_position: 6
+
+---
+
+# linux
+
+## 安装 Home Assistant 操作系统
+
+### 下载适当的镜像
+
+- [VirtualBox](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vdi.zip)(.vdi)
+- KVM(.qcow2)
+
+下载后，解压镜像。如果镜像是 ZIP 文件，请解压它。
+
+如果您已经在运行支持的虚拟机管理程序，请按照本指南操作。如果您不熟悉虚拟机，请直接在 Home Assistant Yellow、[Raspberry Pi](./raspberrypi.mdx) 或 [ODROID](./odroid.mdx) 上安装 Home Assistant OS。
+
+### 创建虚拟机
+
+将设备镜像加载到您的虚拟机管理程序中。（注意：您可以自由分配任意资源给虚拟机，请根据您的附加组件需求分配足够的资源）。
+
+最低推荐分配：
+
+- 2 GB 内存
+- 32 GB 存储
+- 2 个虚拟 CPU
+
+如果您的使用需要更多资源，所有这些都可以扩展。
+
+### 虚拟机管理程序特定配置
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../src/components/ui/tabs"
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">VirtualBox</TabsTrigger>
+    <TabsTrigger value="2">Unraid</TabsTrigger>
+    <TabsTrigger value="3">KVM (virt-manager)</TabsTrigger>
+    <TabsTrigger value="4">KVM (virt-install)</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    1. 创建新的虚拟机。
+    2. 选择类型 **Linux** 和版本 **Linux 2.6 / 3.x / 4.x (64 位)**。
+    3. 在 **硬件** 下，选择内存量和 CPU 数量。然后，选择 **启用 EFI**。
+        - 确保 **EFI** 已启用。如果 EFI 未启用，HAOS 将无法启动。
+    4. 在 **硬盘** 下，选择 **使用现有的虚拟硬盘文件**，选择上面解压的 VDI 文件。
+    5. 然后转到 **网络 > 适配器 1**。选择 **桥接适配器** 并选择您的网络适配器。
+        请注意，桥接适配器仅在有线以太网连接上工作。不支持在 VirtualBox 主机上使用 Wi-Fi。
+    6. 然后转到 **音频** 并选择 **Intel HD Audio** 作为音频控制器。
+
+    默认情况下，VirtualBox 不会释放未使用的磁盘空间。要自动缩小 vdi 磁盘镜像，必须使用主机终端的 `discard` 选项：
+
+    ```
+    VBoxManage storageattach <VM name> --storagectl "SATA" --port 0 --device 0 --nonrotational on --discard on
+    ```
+
+    有关命令的更多详细信息可以在[这里](https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach)找到。
+    
+  </TabsContent>
+  <TabsContent value="2">
+
+    1. 下载上面的 **.qcow2** 镜像并解压。（在 Windows 中使用 **全部提取**）
+    2. 将镜像存储在服务器上的 **isos** 共享中。
+    3. 确保在 **设置 > VM 管理器** 中启用了 **启用 VM**。
+    4. 创建新的虚拟机：**VMS > 添加 VM**。
+    5. 选择类型 **Linux** 并给 VM 一个名称和描述。
+    6. 选择您想让 VM 使用的 CPU 核心并分配一些内存。
+    7. 在 **主虚拟磁盘位置** 下，选择 **手动** 然后选择 qcow2 镜像。
+    8. 在 **VM 控制台键盘** 下选择您的键盘语言。
+    9. 在 **网络源** 下选择 **br0**。
+    10. 在 **网络模型** 下选择 **virtio**。
+    11. 选择您想要传递给 Home Assistant 的任何 USB 设备，例如 Zigbee 或 Z-Wave 控制器。
+    12. 取消选择 **创建后启动 VM**。
+    13. 选择 **创建**。
+    14. 选择新 VM 的名称并选择磁盘的容量数字。在这里，您可以根据需要扩展磁盘。默认为 32 GB。
+    15. 选择新 VM 的图标并选择 **使用控制台启动 (VNC)**。
+
+  </TabsContent>
+  <TabsContent value="3">
+
+    1. 在 `virt-manager` 中创建新的虚拟机。
+    2. 选择 **导入现有磁盘镜像**，提供上面 QCOW2 镜像的路径。
+    3. 选择 **通用默认** 作为操作系统。
+    4. 勾选 **安装前自定义配置** 的复选框。
+    5. 在 **网络选择** 下，选择您的桥接。
+    6. 在自定义中选择 **概述 > 固件 > UEFI x86_64: …**。确保选择非安全启动版本的 OVMF（不包含 `secure`、`secboot` 等词），例如 `/usr/share/edk2/ovmf/OVMF_CODE.fd`。
+    7. 点击 **添加硬件**（左下角），选择 **通道**。
+    8. 选择设备类型：**unix**。
+    9. 选择名称：**org.qemu.guest_agent.0**。
+    10. 最后，选择 **开始安装**（左上角）。
+
+  </TabsContent>
+    <TabsContent value="4">
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi
+    ```
+    如果您有要附加的 USB 设备，需要添加选项 `--hostdev busID.deviceId`。您可以通过 `lsusb` 命令发现这些 ID。例如，如果 `lsusb` 输出是：
+    ```
+    Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 003 Device 004: ID 30c9:0052 Luxvisions Innotech Limited Integrated RGB Camera
+    Bus 003 Device 003: ID 1a86:55d4 QinHeng Electronics SONOFF Zigbee 3.0 USB Dongle Plus V2
+    Bus 003 Device 002: ID 06cb:00fc Synaptics, Inc.
+    Bus 003 Device 005: ID 8087:0033 Intel Corp.
+    Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    ```
+    您可以在 `Bus 003 Device 003` 处识别 Sonoff 设备。因此，安装 VM 的命令将变为：
+
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi --hostdev 003.003
+    ```
+
+    请注意，此配置（总线 003，设备 003）只是一个示例，您的设备可能在另一个总线和/或具有另一个设备 ID。请使用 `lsusb` 检查您的 USB 设备的正确 ID。
+
+  </TabsContent>
+</Tabs>
+
+### 启动您的虚拟机
+
+1. 启动虚拟机。
+2. 观察 Home Assistant 操作系统的启动过程。
+
+3. 完成后，您将能够在 [homeassistant.local:8123](http://homeassistant.local:8123/) 访问 Home Assistant。如果您运行的是较旧版本的 Windows 或具有更严格的网络配置，您可能需要通过 [homeassistant:8123](http://homeassistant:8123/) 或 `http://X.X.X.X:8123` 访问 Home Assistant（将 X.X.X.X 替换为您的虚拟机的 IP 地址）。
+
+安装并可以访问 Home Assistant 操作系统后，您可以继续进行初始化设置。
+
+## 安装 Home Assistant 容器
+
+以下说明适用于在您自己管理的容器环境中运行的 Home Assistant 容器安装。可以使用任何 [OCI](https://opencontainers.org/) 兼容的运行时，但本指南将重点介绍使用 Docker 进行安装。
+
+:::note
+
+此安装方法 **无法使用附加组件**。如果您想使用附加组件，需要使用其他安装方法。推荐的方法是 Home Assistant 操作系统。请查看 [安装类型概述表](./index.mdx#advanced-installation-methods) 以了解差异。
+
+:::
+
+:::tip
+
+**先决条件** 本指南假设您已经设置了操作系统并安装了容器运行时（如 Docker）。
+
+如果您使用 Docker，则需要至少版本 19.03.9，最好是更高版本，以及 `libseccomp` 2.4.2 或更新版本。Docker Desktop 不起作用，您必须使用 Docker Engine。
+
+:::
+
+### 平台安装
+
+使用 Docker 安装很简单。调整以下命令，使：
+
+- `/PATH_TO_YOUR_CONFIG` 指向您要存储配置并运行它的文件夹。确保保留 `:/config` 部分。
+- `MY_TIME_ZONE` 是 [tz 数据库名称](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)，如 `TZ=America/Los_Angeles`。
+- D-Bus 是可选的，但如果您计划使用 [蓝牙集成](/docs/started/installation/bluetooth) 则是必需的。
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">安装</TabsTrigger>
+    <TabsTrigger value="2">更新</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker run -d \
+    --name homeassistant \
+    --privileged \
+    --restart=unless-stopped \
+    -e TZ=MY_TIME_ZONE \
+    -v /PATH_TO_YOUR_CONFIG:/config \
+    -v /run/dbus:/run/dbus:ro \
+    --network=host \
+    ghcr.io/home-assistant/home-assistant:stable
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+      ```
+    # 如果返回"Image is up to date"，那么您可以在此停止
+    docker pull ghcr.io/home-assistant/home-assistant:stable
+
+    # 停止正在运行的容器
+    docker stop homeassistant
+
+    # 从 Docker 的容器列表中移除它
+    docker rm homeassistant
+
+    # 最后，启动一个新的
+    docker run -d \
+    --name homeassistant \
+    --restart=unless-stopped \
+    --privileged \
+    -e TZ=MY_TIME_ZONE \
+    -v /PATH_TO_YOUR_CONFIG:/config \
+    -v /run/dbus:/run/dbus:ro \
+    --network=host \
+    ghcr.io/home-assistant/home-assistant:stable
+
+  ```
+  </TabsContent>
+</Tabs>
+
+一旦 Home Assistant 容器运行，您应该可以通过 `http://<host>:8123`（替换为系统的主机名或 IP）访问 Home Assistant。您可以继续进行初始化设置。
+
+### 重启 Home Assistant
+
+如果您更改了配置，必须重启服务器。为此，您有 3 个选项。
+
+1. 在您的 Home Assistant UI 中，转到 **设置 > 系统** 并点击 **重启** 按钮。
+2. 您可以转到 **开发者工具 > 操作**，选择 `homeassistant.restart` 并选择 **执行操作**。
+3. 从终端重启它。
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker restart homeassistant
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    docker compose restart
+    ```
+  </TabsContent>
+</Tabs>
+
+### Docker compose
+
+:::tip
+
+`docker compose` 应该[已经安装](https://www.docker.com/blog/announcing-compose-v2-general-availability/)在您的系统上。如果没有，您可以[手动](https://docs.docker.com/compose/install/linux/)安装它。
+
+:::
+
+随着 Docker 命令变得越来越复杂，切换到 `docker compose` 可能更可取，并支持在失败或系统重启时自动重启。创建一个 `compose.yml` 文件：
+
+```
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - /PATH_TO_YOUR_CONFIG:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+
+```
+
+Start it by running:
+
+```
+docker compose up -d
+```
+
+一旦 Home Assistant 容器运行，您应该可以通过 `http://<host>:8123`（替换为系统的主机名或 IP）访问 Home Assistant。您可以继续进行初始化设置。
+
+### 暴露设备
+
+为了使用 Zigbee 或其他需要访问设备的集成，您需要将适当的设备映射到容器中。确保运行容器的用户具有访问 `/dev/tty*` 文件的正确权限，然后向容器指令添加设备映射：
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker run ... --device /dev/ttyUSB0:/dev/ttyUSB0 ...
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    services:
+      homeassistant:
+        ...
+        devices:
+          - /dev/ttyUSB0:/dev/ttyUSB0
+    ```
+  </TabsContent>
+</Tabs>
+
+### 优化
+
+Home Assistant 容器使用替代内存分配库 [jemalloc](http://jemalloc.net/) 进行更好的内存管理并加速 Python 运行时。
+
+由于 jemalloc 配置使用的可以导致某些硬件上出现的问题，可以禁用通过传递环境变量 `DISABLE_JEMALLOC` 与任何值，例如：
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker run ... -e "DISABLE_JEMALLOC=true" ...
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    services:
+      homeassistant:
+      ...
+        environment:
+          DISABLE_JEMALLOC: true
+    ```
+  </TabsContent>
+</Tabs>
+
+错误消息 `<jemalloc>: Unsupported system page size` 是已知指示器。
+
+## 安装 Home Assistant Core
+
+:::danger 警告
+
+这是一个高级安装过程，某些步骤可能与您的系统不同。考虑到这种安装类型的性质，我们假设您可以处理本文档与您使用的系统配置之间的细微差异。如有疑问，请考虑使用其他安装方法，因为它们可能更适合。
+
+:::
+
+### 先决条件
+
+本指南假设您已经设置了操作系统并安装了 Python 3.13（包括包 `python3-dev`）或更新版本。
+
+### 安装依赖项
+
+在开始之前，请确保您的系统完全更新，本指南中的所有包都使用 `apt` 安装，如果您的操作系统没有，请寻找替代方案。
+
+```
+sudo apt-get update
+sudo apt-get upgrade -y
+```
+
+安装依赖项：
+
+```
+sudo apt-get install -y python3 python3-dev python3-venv python3-pip bluez libffi-dev libssl-dev libjpeg-dev zlib1g-dev autoconf build-essential libopenjp2-7 libtiff6 libturbojpeg0-dev tzdata ffmpeg liblapack3 liblapack-dev libatlas-base-dev
+```
+
+上述列出的依赖项可能因您的系统或个人使用 Home Assistant 而有所不同或缺失。
+
+### 创建账户
+
+添加一个名为 `homeassistant` 的 Home Assistant Core 账户。由于此账户仅用于运行 Home Assistant Core，因此添加了 `-rm` 额外参数以创建系统账户并创建主目录。参数 `-G dialout,gpio,i2c` 将用户添加到 `dialout`、`gpio` 和 `i2c` 组。第一个是使用 Z-Wave 和 Zigbee 控制器所必需的，而第二个是与 GPIO 通信所必需的。
+
+```
+sudo useradd -rm homeassistant -G dialout,gpio,i2c
+```
+
+### 创建虚拟环境
+
+首先，我们将为 Home Assistant Core 的安装创建一个目录，并将所有者更改为 `homeassistant` 账户。
+
+```
+sudo mkdir /srv/homeassistant
+sudo chown homeassistant:homeassistant /srv/homeassistant
+```
+
+接下来是创建并切换到 Home Assistant Core 的虚拟环境。这将作为 `homeassistant` 账户完成。
+
+```
+sudo -u homeassistant -H -s
+cd /srv/homeassistant
+python3 -m venv .
+source bin/activate
+```
+
+一旦您激活了虚拟环境（注意提示更改为 (`homeassistant`) `homeassistant@raspberrypi:/srv/homeassistant $`），您需要运行以下命令来安装所需的 Python 包。
+
+```
+python3 -m pip install wheel
+```
+
+一旦您安装了所需的 Python 包，现在就是安装 Home Assistant Core 的时候了！
+
+```
+pip3 install homeassistant==2025.3.4
+```
+
+**故障排除**：如果您在环境中看不到上述版本的 Home Assistant 包，请确保您已安装正确的 Python 版本，如先决条件中定义的那样。
+
+首次启动 Home Assistant Core。这将为您完成安装，自动在 `/home/homeassistant` 目录中创建 `.homeassistant` 配置目录，并安装任何基本依赖项。
+
+```
+hass
+```
+
+您现在可以通过 Web 界面访问您的安装，地址为 `http://homeassistant.local:8123`
+
+如果此地址不起作用，您也可以尝试 `http://localhost:8123` 或 `http://X.X.X.X:8123`（将 X.X.X.X 替换为您机器的 IP 地址）。
+
+:::note
+
+当您第一次运行 `hass` 命令时，它将下载、安装和缓存必要的库/依赖项。此过程可能需要 5 到 10 分钟。在此期间，访问 Web 界面时可能会出现**无法访问站点**错误。这只会发生在第一次。后续重启会快得多。
+
+:::
+
+### 安装 Home Assistant Supervised
+
+:::danger 警告
+
+这种运行 Home Assistant 的方式对您的要求最高。它也有严格的要求需要遵循。
+
+除非您真的需要这种安装类型，否则您应该安装 Home Assistant OS（这也可以是虚拟机）或 Home Assistant Container。
+
+:::
+
+1. 首先确保您了解[要求](https://github.com/home-assistant/architecture/blob/master/adr/0014-home-assistant-supervised.md)。
+2. 这种安装方法有非常严格的要求，例如，它只支持 Debian（而 Ubuntu、Armbian、Raspberry Pi OS **不**支持）。因此，请确保您了解上述第 1 步中的要求。
+3. 然后前往 [home-assistant/supervised-installer](https://github.com/home-assistant/supervised-installer) 进行设置。
+一旦 Home Assistant Supervised 安装运行并且可以访问 Home Assistant，您可以继续进行初始化设置。
+
+## 故障排除
+
+### 无法访问前端
+
+症状：您无法在浏览器中打开 Home Assistant 页面。如果您不使用 Home Assistant 操作系统，原因可能是访问限制。
+
+在较新的 Linux 发行版中，对主机的访问非常有限。这意味着您无法访问在主机机器外部运行的 Home Assistant 前端。
+
+要解决此问题，您需要为 TCP 流量打开机器的防火墙端口 8123。执行此操作的方法将根据您的操作系统和安装的防火墙而有所不同。以下是一些建议。Google 是您的好帮手。
+
+对于 UFW 系统（例如 Debian）：
+
+```
+sudo ufw allow 8123/tcp
+```

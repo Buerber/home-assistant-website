@@ -1,0 +1,52 @@
+---
+sidebar_label: 条件（conditions）
+---
+
+# 自动化条件（conditions）
+
+<p className="text-xl font-semibold">条件是自动化规则的可选部分。它们可用于防止自动化的动作被执行。触发器触发后，所有条件都将被检查。如果所有条件都返回 `true`，自动化将被执行；否则，如果任何一个条件不返回 `true`，自动化将停止执行。</p>
+
+条件看起来与触发器非常相似，但它们有很大的不同 — 触发器会关注系统中发生的事件，而条件只关注系统当前的状态。触发器可以观察到开关正在被打开。条件只能看到开关当前是开着还是关着。
+
+自动化的可用条件与脚本语法相同，所以请查看该页面获取[完整的可用条件列表](https://www.home-assistant.io/docs/scripts/conditions/)。
+
+使用条件的示例：
+
+```yaml
+automation:
+  - alias: "打开办公室灯"
+    triggers:
+      - trigger: state
+        entity_id: sensor.office_motion_sensor
+        to: "on"
+    conditions:
+      - or:
+        - condition: numeric_state
+          entity_id: sun.sun
+          attribute: elevation
+          below: 4
+        - condition: numeric_state
+          entity_id: sensor.office_lux_sensor
+          below: 10
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.office_lights
+```
+
+自动化的 `condition` 选项也可以直接接受单个条件模板。例如：
+
+```yaml
+automation:
+  - alias: "打开办公室灯"
+    triggers:
+      - trigger: state
+        entity_id: sensor.office_motion_sensor
+        to: "on"
+    conditions: "{{ state_attr('sun.sun', 'elevation') < 4 }}"
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.office_lights
+```
+

@@ -1,0 +1,1015 @@
+---
+sidebar_label: 触发器（triggers）
+---
+
+# 自动化触发器（triggers）
+
+<p className="text-xl font-semibold"> 触发器是启动自动化规则处理的条件。当自动化的任何触发器变为true（触发器被触发）时，Home Assistant将验证[条件](https://www.home-assistant.io/docs/automation/condition/)（如果有），并调用[动作](https://www.home-assistant.io/docs/automation/action/)。</p>
+
+自动化可以由事件、特定实体状态、特定时间等触发。这些可以直接指定或通过模板更灵活地指定。也可以为一个自动化指定多个触发器。
+
+- 触发器ID
+- 触发器变量
+- 事件触发器
+- Home Assistant触发器
+- MQTT触发器
+- 数值状态触发器
+- 状态触发器
+- 太阳触发器
+- 标签触发器
+- 模板触发器
+- 时间触发器
+- 时间模式触发器
+- 持久通知触发器
+- Webhook触发器
+- 区域触发器
+- 地理位置触发器
+- 设备触发器
+- 日历触发器
+- 句子触发器
+- 多个触发器
+- 同一触发器的多个实体ID
+- 禁用触发器
+- 合并触发器列表
+
+## 触发器ID
+
+所有触发器都可以分配一个可选的`id`。如果省略ID，它将设置为触发器的索引。可以从[触发器条件和动作](https://www.home-assistant.io/docs/scripts/conditions/#trigger-condition)中引用`id`。`id`不必对每个触发器都是唯一的，它可以用于将相似的触发器分组，以便在自动化中稍后使用（例如，应该都打开某个实体的不同类型的多个触发器）。
+
+### 视频教程
+
+此视频教程解释了触发器ID的工作原理。
+
+// 视频
+
+```yaml
+automation:
+  triggers:
+    - trigger: event
+      event_type: "MY_CUSTOM_EVENT"
+      id: "custom_event"
+    - trigger: mqtt
+      topic: "living_room/switch/ac"
+      id: "ac_on"
+    - trigger: state  # 此触发器将被分配id="2"
+      entity_id:
+        - device_tracker.paulus
+        - device_tracker.anne_therese
+      to: "home"
+```
+
+### 触发器变量
+触发器有两种不同类型的可用变量。两者的工作方式都类似于[脚本级变量](https://www.home-assistant.io/integrations/script/#variables)。
+
+第一种变体允许您定义在触发器触发时设置的变量。这些变量将能够使用模板，并可以访问[`trigger`变量](https://www.home-assistant.io/docs/automation/templating#available-trigger-data)。
+
+第二种变体是设置在附加触发器时可用的变量，当触发器可以包含模板值时。这些使用自动化级别的`trigger_variables`键定义。这些变量只能包含[有限模板](https://www.home-assistant.io/docs/configuration/templating/#limited-templates)。如果模板的值发生变化，触发器不会重新应用。触发器变量是一项旨在支持在触发器中使用蓝图输入的功能。
+
+```yaml
+automation:
+  trigger_variables:
+    my_event: example_event
+  triggers:
+    - trigger: event
+      # 能够使用`trigger_variables`
+      event_type: "{{ my_event }}"
+      # 这些变量在触发此触发器时被评估和设置
+      variables:
+        name: "{{ trigger.event.data.name }}"
+```
+
+还可以同时监听多个事件。这对于不包含数据或包含相似数据和上下文的事件很有用。
+
+```yaml
+automation:
+  triggers:
+    - trigger: event
+      event_type:
+        - automation_reloaded
+        - scene_reloaded
+```
+
+也可以在`event_type`、`event_data`和`context`选项中使用[有限模板](https://www.home-assistant.io/docs/configuration/templating/#limited-templates)。
+
+:::tip
+event_type、event_data和context模板仅在设置触发器时评估，它们不会为每个事件重新评估。
+:::
+
+```yaml
+automation:
+  trigger_variables:
+    sub_event: ABC
+    node: ac
+    value: on
+  triggers:
+    - trigger: event
+      event_type: "{{ 'MY_CUSTOM_EVENT_' ~ sub_event }}"
+```
+
+## Home Assistant触发器
+
+在Home Assistant启动或关闭时触发。
+
+```yaml
+automation:
+  triggers:
+    - trigger: homeassistant
+      # 事件也可以是'shutdown'
+      event: start
+```
+
+:::note
+由`shutdown`事件触发的自动化有20秒运行时间，之后将停止以继续关闭过程。
+:::
+
+## MQTT触发器
+
+当在给定的MQTT主题上接收到特定消息时触发。可以选择匹配通过主题发送的负载。默认的负载编码是'utf-8'。对于图像和其他字节负载，使用`encoding: ''`完全禁用负载解码。
+
+```yaml
+automation:
+  triggers:
+    - trigger: mqtt
+      topic: "living_room/switch/ac"
+      # 可选
+      payload: "on"
+      encoding: "utf-8"
+```
+
+`payload`选项可以与`value_template`结合使用，在将其与负载匹配之前处理在给定MQTT主题上接收的消息。下面示例中的触发器仅在`living_room/switch/ac`上接收到的消息是有效的JSON，且具有值为`"on"`的键`state`时触发。
+
+```yaml
+automation:
+  triggers:
+    - trigger: mqtt
+      topic: "living_room/switch/ac"
+      payload: "on"
+      value_template: "{{ value_json.state }}"
+```
+
+也可以在`topic`和`payload`选项中使用[有限模板](https://www.home-assistant.io/docs/configuration/templating/#limited-templates)。
+
+:::note
+`topic`和`payload`模板仅在设置触发器时评估，它们不会为每个传入的MQTT消息重新评估。
+:::
+
+```yaml
+automation:
+  trigger_variables:
+    room: "living_room"
+    node: "ac"
+    value: "on"
+  triggers:
+    - trigger: mqtt
+      topic: "{{ room ~ '/switch/' ~ node}}"
+      # 可选
+      payload: "{{ 'state:' ~ value }}"
+      encoding: "utf-8"
+```
+
+## 数值状态触发器
+
+当实体状态的数值（或者如果使用`attribute`属性，则为属性值；或者如果使用`value_template`属性，则为计算值）**跨越**给定阈值（不包括等于）时触发。在指定实体的状态变化时，尝试将状态解析为数字，如果值从高于阈值变为低于阈值，或从低于阈值变为高于阈值（不包括等于），则触发。
+
+:::note
+跨越阈值意味着触发器仅在状态先前不在阈值内时触发。如果实体的当前状态为`50`，并且您将阈值设置为`below: 75`，如果状态变为`49`或`72`，触发器不会触发，因为从未跨越阈值。状态首先必须变为`76`，然后变为`74`，触发器才会触发。
+:::
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.temperature
+      # 如果提供，将在给定实体的给定属性值发生变化时触发..
+      attribute: attribute_name
+      # ..或者，将在由此评估模板给出的值发生变化时触发。
+      value_template: "{{ state.attributes.value - 5 }}"
+      # 至少需要以下一项
+      above: 17
+      below: 25
+      # 如果提供，将在条件已经为真X时间时触发；您还可以使用天和毫秒。
+      for:
+        hours: 1
+        minutes: 10
+        seconds: 5
+```
+
+:::note
+同时列出above和below意味着numeric_state必须在两个值之间。在上面的示例中，如果numeric_state进入17.1-24.9范围（高于17且低于25），触发器将触发一次。只有在离开定义的范围并再次进入后，它才会再次触发。
+:::
+
+指定`attribute`选项时，触发器与给定的`attribute`而不是实体的状态进行比较。
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: climate.kitchen
+      attribute: current_temperature
+      above: 23
+```
+
+可以使用`value_template`进行更动态和复杂的计算。变量'state'是由`entity_id`指定的实体的[状态对象](https://www.home-assistant.io/docs/configuration/state_object)。
+
+可以这样引用实体的状态：
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.temperature
+      value_template: "{{ state.state | float * 9 / 5 + 32 }}"
+      above: 70
+```
+
+可以这样引用实体的属性：
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: climate.kitchen
+      value_template: "{{ state.attributes.current_temperature - state.attributes.temperature_set_point }}"
+      above: 3
+```
+
+数字助手（`input_number`实体）、`number`、`sensor`和`zone`实体如果包含数值，可以用在`above`和`below`阈值中。但是，只有当触发器中指定的实体更新时才会进行比较。示例如下：
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.outside_temperature
+      # 可以为above和/或below阈值指定其他实体ID
+      above: sensor.inside_temperature
+```
+
+`for:`也可以按照`HH:MM:SS`格式指定，如下所示：
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.temperature
+      # 至少需要以下一项
+      above: 17
+      below: 25
+
+      # 如果提供，将在条件已经为真X时间时触发
+      for: "01:10:05"
+```
+
+您也可以在`for`选项中使用模板。
+
+```yaml
+automation:
+  triggers:
+    - trigger: numeric_state
+      entity_id:
+        - sensor.temperature_1
+        - sensor.temperature_2
+      above: 80
+      for:
+        minutes: "{{ states('input_number.high_temp_min')|int }}"
+        seconds: "{{ states('input_number.high_temp_sec')|int }}"
+  actions:
+    - action: persistent_notification.create
+      data:
+        message: >
+          {{ trigger.to_state.name }} 持续过高 {{ trigger.for }}！
+```
+
+当实体按指定方式发生变化时，将评估`for`模板。
+
+:::tip
+使用`for`选项的设置在Home Assistant重启或自动化重新加载时不会保留。在重启或重新加载期间，正在等待`for`触发器通过的自动化将被重置。
+
+如果这种情况不适合您的使用场景，您可以考虑使用自动化来设置[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)到所需时间，然后使用该[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)作为自动化触发器，在设定的时间执行所需的操作。
+:::
+
+## 状态触发器
+
+通常，当任何给定实体的状态`变化`时，状态触发器会触发。行为如下：
+
+- 如果只给出`entity_id`，触发器会在**所有**状态变化时触发，即使只是状态属性发生变化。
+
+- 如果至少给出`from`、`to`、`not_from`或`not_to`中的一个，触发器会在任何匹配的状态变化时触发，但如果只是属性变化则不会触发。
+    - 要触发所有状态变化，但不触发属性变化，将`from`、`to`、`not_from`或`not_to`中的至少一个设置为null。
+- 使用`for`选项的设置不会在Home Assistant重启或自动化重新加载时保留。
+    - 在重启或重新加载期间，正在等待`for`触发器通过的自动化将被重置。
+    - 如果这种情况不适合您的使用场景，您可以考虑使用自动化来设置[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)到所需时间，然后使用该[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)作为自动化触发器，在设定的时间执行所需的操作。
+
+:::tip
+您在概览中看到的值通常与实体的实际状态不同。例如，概览可能显示`Connected`，而底层实体实际上是`on`。您应该通过检查开发者工具中的状态来检查实体的状态，在[开发者工具 > 状态](https://my.home-assistant.io/redirect/developer_states)下。
+:::
+
+### 示例
+
+如果Paulus或Anne-Therese在家一分钟，此自动化将触发。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id:
+        - device_tracker.paulus
+        - device_tracker.anne_therese
+      # 可选
+      from: "not_home"
+      # 可选
+      to: "home"
+      # 如果提供，将在条件已经为真X时间时触发；您还可以使用天和毫秒。
+      for:
+        hours: 0
+        minutes: 1
+        seconds: 0
+```
+
+可以给出`from`状态或`to`状态的列表：
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: vacuum.test
+      from:
+        - "cleaning"
+        - "returning"
+      to: "error"
+```
+
+如果您想触发所有状态变化，但不触发属性变化，可以将`to`设置为`null`（这也可以通过将`from`、`not_from`或`not_to`设置为`null`来实现）：
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: vacuum.test
+      to:
+```
+
+如果您想触发除特定状态外的所有状态变化，请使用`not_from`或`not_to`。`not_from`和`not_to`选项是`from`和`to`的对应项。它们可用于触发**不是**指定状态的状态变化。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: vacuum.test
+      not_from:
+        - "unknown"
+        - "unavailable"
+      to: "on"
+```
+
+不能同时使用`from`和`not_from`。同样适用于`to`和`not_to`。
+
+### 触发属性变化
+
+当指定`attribute`选项时，触发器仅在指定属性`变化`时触发。其他属性的变化或状态变化将被忽略。
+
+例如，此触发器仅在锅炉加热10分钟时触发：
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: climate.living_room
+      attribute: hvac_action
+      to: "heating"
+      for: "00:10:00"
+```
+
+每当锅炉的`hvac_action`属性发生变化时，此触发器都会触发：
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: climate.living_room
+      attribute: hvac_action
+```
+
+### 保持状态或属性
+
+您可以使用`for`让状态触发器仅在状态保持一段时间时触发。
+
+此示例在实体状态变为`"on"`并保持该状态30秒时触发：
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: light.office
+      # 必须保持"on"状态30秒
+      to: "on"
+      for: "00:00:30"
+```
+
+当保持状态时，属性变化将被忽略。属性变化不会取消保持时间。
+
+您还可以在状态值从特定状态变化但未返回该状态值指定时间时触发触发器。
+
+这对于检查媒体播放器是否在指定时间内没有变为"off"很有用，但不关心"playing"或"paused"。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: media_player.kitchen
+      # 30分钟内不是"off"
+      from: "off"
+      for: "00:30:00"
+```
+
+请注意，当使用`from`、`to`和`for`时，只考虑`to`选项的值用于指定的时间。
+
+在此示例中，如果实体的状态值在`for`指定的时间内保持不变，触发器将触发，无论当前状态值如何。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id: media_player.kitchen
+      # 媒体播放器在其当前状态保持1小时
+      for: "01:00:00"
+```
+
+您也可以在`for`选项中使用模板。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id:
+        - device_tracker.paulus
+        - device_tracker.anne_therese
+      to: "home"
+      for:
+        minutes: "{{ states('input_number.lock_min')|int }}"
+        seconds: "{{ states('input_number.lock_sec')|int }}"
+  actions:
+    - action: lock.lock
+      target:
+        entity_id: lock.my_place
+```
+
+当实体按指定方式发生变化时，将评估`for`模板。
+
+:::tip
+在`from`和`to`的值周围使用引号，以避免YAML解析器将值解释为布尔值。
+:::
+
+## 太阳触发器
+
+### 日落/日出触发器
+
+当太阳正在落下或升起时触发，即当太阳高度达到0°时。
+
+可以给出一个可选的时间偏移量，使其在太阳事件之前或之后的一段时间触发（例如，日落前45分钟）。负值使其在日出或日落之前触发，正值使其在之后触发。偏移量需要以秒数指定，或以hh:mm:ss格式指定。
+
+:::tip
+由于黄昏的持续时间在一年中不同，建议使用[太阳高度触发器](https://www.home-assistant.io/docs/automation/trigger/#sun-elevation-trigger)而不是带有时间偏移的`sunset`或`sunrise`来在黄昏或黎明时触发自动化。
+:::
+
+```yaml
+automation:
+  triggers:
+    - trigger: sun
+      # 可能的值：sunset, sunrise
+      event: sunset
+      # 可选的时间偏移。此示例将在日落前45分钟触发。
+      offset: "-00:45:00"
+```
+
+### 太阳高度触发器
+
+有时您可能希望对自动化进行比简单的日落或日出更精细的控制，并指定太阳的确切高度。这可用于在太阳降低到地平线时或甚至在它低于地平线后分层自动化。这对于"日落"事件不够暗且您希望自动化在精确的太阳角度而不是时间偏移（如打开外部照明）时运行也很有用。对于大多数旨在在黄昏或黎明时运行的自动化，0°到-6°之间的数字是合适的；此示例使用-4°：
+
+```yaml
+automation:
+  - alias: "外部照明在外部变暗时打开"
+    triggers:
+      - trigger: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        # 可以是正数或负数
+        below: -4.0
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.exterior_lighting
+```
+
+如果您想更精确，可以使用此[太阳计算器](https://gml.noaa.gov/grad/solcalc/)，它将帮助您估计任何特定时间的太阳高度。然后，您可以从中选择定义的黄昏数字。
+
+尽管实际的光量取决于天气、地形和土地覆盖，但它们被定义为：
+
+- 民用黄昏：0° > 太阳角度 > -6°
+
+    这是普通人所说的黄昏：在晴朗的天气条件下，民用黄昏近似于太阳照明足以让人类眼睛清晰区分地面物体的极限。足够的照明使人工光源对于大多数户外活动变得不必要。
+
+- 航海黄昏：-6° > 太阳角度 > -12°
+
+- 天文黄昏：-12° > 太阳角度 > -18°
+
+关于这一点的一个非常详细的解释可以在维基百科关于[黄昏](https://en.wikipedia.org/wiki/Twilight)的文章中找到。
+
+## 标签触发器
+
+当扫描[标签](https://www.home-assistant.io/integrations/tag)时触发。例如，使用Home Assistant Companion移动应用程序扫描NFC标签。
+
+```yaml
+automation:
+  triggers:
+    - trigger: tag
+      tag_id: A7-6B-90-5F
+```
+
+此外，您还可以通过设置`device_id`来仅在特定设备/扫描仪扫描卡片时触发：
+
+```yaml
+automation:
+  triggers:
+    - trigger: tag
+      tag_id: A7-6B-90-5F
+      device_id: 0e19cd3cf2b311ea88f469a7512c307d
+```
+
+或为多个标签触发多个可能的设备：
+
+```yaml
+automation:
+  triggers:
+    - trigger: tag
+      tag_id:
+        - "A7-6B-90-5F"
+        - "A7-6B-15-AC"
+      device_id:
+        - 0e19cd3cf2b311ea88f469a7512c307d
+        - d0609cb25f4a13922bb27d8f86e4c821
+```
+
+## 模板触发器
+
+模板触发器通过在识别的任何实体改变状态时评估[模板](https://www.home-assistant.io/docs/configuration/templating/)来工作。如果状态变化导致模板渲染为'true'（非零数字或任何字符串`true`、`yes`、`on`、`enable`）而之前为'false'（其他任何内容），触发器将触发。
+
+这是通过让模板产生一个真布尔表达式（例如`{{ is_state('device_tracker.paulus', 'home') }}`）或让模板渲染`true`（如下例）来实现的。
+
+使用模板触发器，您还可以通过使用is_state_attr来评估属性变化（如`{{ is_state_attr('climate.living_room', 'away_mode', 'off') }}`）
+
+```yaml
+automation:
+  triggers:
+    - trigger: template
+      value_template: "{% if is_state('device_tracker.paulus', 'home') %}true{% endif %}"
+
+      # 如果提供，将在模板保持为真X时间时触发。
+      for: "00:01:00"
+```
+
+您也可以在`for`选项中使用模板。
+
+```yaml
+automation:
+  triggers:
+    - trigger: template
+      value_template: "{{ is_state('device_tracker.paulus', 'home') }}"
+      for:
+        minutes: "{{ states('input_number.minutes')|int(0) }}"
+```
+
+当`value_template`变为'true'时，将评估`for`模板。
+
+不包含实体的模板将每分钟渲染一次。
+
+:::info 重要
+使用`for`选项的设置不会在Home Assistant重启或自动化重新加载时保留。在重启或重新加载期间，正在等待`for`触发器通过的自动化将被重置。
+
+如果这种情况不适合您的使用场景，您可以考虑使用自动化来设置[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)到所需时间，然后使用该[`input_datetime`](https://www.home-assistant.io/integrations/input_datetime)作为自动化触发器，在设定的时间执行所需的操作。
+:::
+
+## 时间触发器
+
+时间触发器配置为每天在特定时间触发一次，或在特定日期的特定时间触发。有三种允许的格式：
+
+### 时间字符串
+
+表示每天触发时间的字符串。可以指定为`HH:MM`或`HH:MM:SS`。如果未指定秒，将使用`:00`。
+
+```yaml
+automation:
+  - triggers:
+    - trigger: time
+      # 军用时间格式。此触发器将在下午3:32触发
+      at: "15:32:00"
+```
+
+### 输入日期时间
+
+[input datetime](https://www.home-assistant.io/integrations/input_datetime/)的实体ID。
+
+|**has_date**|**has_time**|**描述**|
+| --- | --- | --- |
+|`true` | `true`|Will fire at specified date & time.
+|`true` | `false`|Will fire at midnight on specified date.
+|`false` |`true`|Will fire once a day at specified time.
+
+```yaml
+automation:
+  - triggers:
+      - trigger: state
+        entity_id: binary_sensor.motion
+        to: "on"
+    actions:
+      - action: climate.turn_on
+        target:
+          entity_id: climate.office
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.turn_off_ac
+        data:
+          datetime: >
+            {{ (now().timestamp() + 2*60*60)
+               | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+  - triggers:
+      - trigger: time
+        at: input_datetime.turn_off_ac
+    actions:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.office
+```
+
+### 时间戳设备类的传感器
+
+具有"timestamp"设备类的[传感器](https://www.home-assistant.io/integrations/sensor/)的实体ID。
+
+```yaml
+automation:
+  - triggers:
+      - trigger: time
+        at: sensor.phone_next_alarm
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.bedroom
+```
+
+### 带偏移量的时间戳设备类传感器
+
+当使用时间戳设备类的传感器提供时间时，可以提供偏移量。此偏移量将添加到（或从传感器值中减去，当为负时）传感器值。
+
+例如，此触发器在手机闹钟响起前5分钟触发。
+
+```yaml
+automation:
+  - triggers:
+      - trigger: time
+        at:
+          entity_id: sensor.phone_next_alarm
+          offset: -00:05:00
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.bedroom
+```
+
+:::info 重要
+当使用正偏移量时，触发器可能永远不会触发。这是由于传感器在达到偏移量之前发生变化。例如，当使用手机闹钟作为触发器时，当闹钟响起时，传感器值将更改为新的闹钟时间，这意味着此触发器也将更改为新的时间。
+:::
+
+### 多个时间
+
+可以在列表中提供多个时间。所有格式可以混合使用。
+
+```yaml
+automation:
+  triggers:
+    - trigger: time
+      at:
+        - input_datetime.leave_for_work
+        - "18:30:00"
+        - entity_id: sensor.bus_arrival
+          offset: "-00:10:00"
+```
+
+### 有限模板
+
+也可以使用[有限模板](https://www.home-assistant.io/docs/configuration/templating/#limited-templates)来表示时间。
+
+```yaml
+blueprint:
+  input:
+    alarm:
+      name: 闹钟
+      selector:
+        text:
+    hour:
+      name: 小时
+      selector:
+        number:
+          min: 0
+          max: 24
+
+  trigger_variables:
+    my_alarm: !input alarm
+    my_hour: !input hour
+  trigger:
+    - platform: time
+      at:
+      - "sensor.{{ my_alarm | slugify }}_time"
+      - "{{ my_hour }}:30:00"
+```
+
+## 时间模式触发器
+
+使用时间模式触发器，您可以匹配当前时间的小时、分钟或秒是否匹配特定值。您可以在值前加上`/`以匹配每当该值可被该数字整除时。您可以指定`*`以匹配任何值（使用Web界面时这是必需的，字段不能留空）。
+
+```yaml
+automation:
+  triggers:
+    - trigger: time_pattern
+      # 每小时在整点后5分钟匹配
+      minutes: 5
+
+automation 2:
+  triggers:
+    - trigger: time_pattern
+      # 在3点期间每分钟触发一次
+      hours: "3"
+      minutes: "*"
+
+automation 3:
+  triggers:
+    - trigger: time_pattern
+      # 您也可以匹配间隔。这将每5分钟匹配一次
+      minutes: "/5"
+```
+
+:::note
+不要用零前缀数字 - 例如使用`'01'`而不是`'1'`会导致错误。
+:::
+
+## 持久通知触发器
+
+当`persistent_notification`被`添加`或`移除`且匹配配置选项时，持久通知触发器会触发。
+
+```yaml
+automation:
+  triggers:
+    - trigger: persistent_notification
+      update_type:
+        - added
+        - removed
+      notification_id: invalid_config
+```
+
+有关事件触发器和自动化可用的其他事件数据的更多详细信息，请参阅[持久通知](https://www.home-assistant.io/integrations/persistent_notification/)集成。
+
+## Webhook触发器
+
+当向webhook端点发出Web请求时，Webhook触发器会触发：`/api/webhook/<webhook_id>`。当您在自动化触发器中将其设置为`webhook_id`时，webhook端点会自动创建。
+
+```yaml
+automation:
+  triggers:
+    - trigger: webhook
+      webhook_id: "some_hook_id"
+      allowed_methods:
+        - POST
+        - PUT
+      local_only: true
+```
+
+您可以通过向`http://your-home-assistant:8123/api/webhook/some_hook_id`发送HTTP POST请求来运行此自动化。以下是使用`curl`命令行程序的示例，带有示例表单数据负载：
+
+```Bash
+curl -X POST -d 'key=value&key2=value2' https://your-home-assistant:8123/api/webhook/some_hook_id
+```
+
+Webhooks支持HTTP POST、PUT、HEAD和GET请求；建议使用PUT请求。默认情况下不启用HTTP GET和HEAD请求，但可以通过将它们添加到`allowed_methods`选项来启用。请求方法也可以通过单击Webhook ID旁边的设置齿轮菜单按钮在UI中配置。
+
+默认情况下，webhook触发器只能从与Home Assistant在同一网络上的设备或通过[Nabu Casa Cloud webhooks](https://www.nabucasa.com/config/webhooks/)访问。`local_only`选项应设置为`false`以允许webhooks直接通过互联网触发。此选项也可以通过单击Webhook ID旁边的设置齿轮菜单按钮在UI中配置。
+
+如果您的Home Assistant安装已使用SSL/TLS保护，请记住使用HTTPS URL。
+
+请注意，给定的webhook一次只能用于一个自动化。也就是说，只有一个自动化触发器可以使用特定的webhook ID。
+
+### Webhook数据
+
+负载可以编码为表单数据或JSON。根据这一点，其数据将在自动化模板中作为`trigger.data`或`trigger.json`可用。URL查询参数在模板中也作为`trigger.query`可用。
+
+请注意，要使用JSON编码的负载，必须将`Content-Type`标头设置为`application/json`，例如：
+
+```Bash
+curl -X POST -H "Content-Type: application/json" -d '{ "key": "value" }' https://your-home-assistant:8123/api/webhook/some_hook_id
+```
+
+### Webhook安全性
+Webhook端点不需要身份验证，只需要知道有效的webhook ID。Webhook的安全最佳实践包括：
+
+- 不要使用webhooks来触发具有破坏性或可能造成安全问题的自动化。例如，不要使用webhook来解锁锁或打开车库门。
+- 像对待密码一样对待webhook ID：使用唯一的、不可猜测的值，并保持其机密性。
+- 不要从公共来源（包括蓝图）复制和粘贴webhook ID。始终创建自己的。
+- 如果不需要从互联网访问，请保持`local_only`选项启用。
+
+## 区域触发器
+
+当实体进入或离开区域时，区域触发器会触发。实体可以是人，也可以是device_tracker。要使区域自动化工作，您需要设置一个支持报告GPS坐标的设备跟踪器平台。这包括[GPS Logger](https://www.home-assistant.io/integrations/gpslogger/)、[OwnTracks平台](https://www.home-assistant.io/integrations/owntracks/)和[iCloud平台](https://www.home-assistant.io/integrations/icloud/)。
+
+```yaml
+automation:
+  triggers:
+    - trigger: zone
+      entity_id: person.paulus
+      zone: zone.home
+      # 事件是enter或leave
+      event: enter # 或 "leave"
+```
+
+## 地理位置触发器
+
+当实体出现在区域中或从区域中消失时，地理位置触发器会触发。由[地理位置](https://www.home-assistant.io/integrations/geo_location/)平台创建的实体支持报告GPS坐标。由于这些平台自动生成和删除实体，通常无法预测实体ID。相反，此触发器需要定义`source`，它直接链接到地理位置平台之一。
+
+:::tip
+这不适用于`device_tracker`实体。对于这些，请查看上面的`zone`触发器。
+:::
+
+```yaml
+automation:
+  triggers:
+    - trigger: geo_location
+      source: nsw_rural_fire_service_feed
+      zone: zone.bushfire_alert_zone
+      # 事件是enter或leave
+      event: enter # 或 "leave"
+```
+
+## 设备触发器
+
+设备触发器包含由集成定义的一组事件。这包括，例如，传感器的状态变化以及遥控器的按钮事件。[MQTT设备触发器](https://www.home-assistant.io/integrations/device_trigger.mqtt/)通过自动发现设置。
+
+与状态触发器不同，设备触发器绑定到设备，而不一定是实体。要使用设备触发器，请通过浏览器前端设置自动化。如果您想将设备触发器用于不是通过浏览器前端管理的自动化，您可以从前端复制触发器的YAML并将其粘贴到您的自动化触发器列表中。
+
+## 日历触发器
+
+当[日历](https://www.home-assistant.io/integrations/calendar/)事件开始或结束时，日历触发器会触发，允许比使用日历实体状态更灵活的自动化，后者一次只支持单个事件开始。
+
+可以给出一个可选的时间偏移量，使其在日历事件之前或之后的一段时间触发（例如，事件开始前5分钟）。
+
+```yaml
+automation:
+  triggers:
+    - trigger: calendar
+      # 可能的值：start, end
+      event: start
+      # 日历实体ID
+      entity_id: calendar.light_schedule
+      # 可选的时间偏移
+      offset: "-00:05:00"
+```
+
+有关事件触发器和自动化可用的其他事件数据的更多详细信息，请参阅[日历](https://www.home-assistant.io/integrations/calendar/)集成。
+
+## 句子触发器
+
+当[Assist](https://www.home-assistant.io/voice_control/)使用默认[对话代理](https://www.home-assistant.io/integrations/conversation/)匹配来自语音助手的句子时，句子触发器会触发。句子触发器仅适用于Home Assistant Assist。外部对话代理（如OpenAI或Google Generative AI）不能用于触发自动化。
+
+句子允许使用一些基本的[模板语法](https://developers.home-assistant.io/docs/voice/intent-recognition/template-sentence-syntax/#sentence-templates-syntax)，如可选和替代词。例如，`[it's ]party time`将匹配"party time"和"it's party time"。
+
+```yaml
+automation:
+  triggers:
+    - trigger: conversation
+      command:
+        - "[it's ]party time"
+        - "happy (new year|birthday)"
+```
+
+此触发器将匹配的句子：
+
+- party time
+- it's party time
+- happy new year
+- happy birthday
+
+标点符号和大小写被忽略，所以"It's PARTY TIME!!!"也会匹配。
+
+### 相关主题
+- [添加自定义句子以触发自动化](https://www.home-assistant.io/voice_control/custom_sentences/#adding-a-custom-sentence-to-trigger-an-automation)
+
+### 句子通配符
+
+在触发句子中添加一个或多个`{lists}`将捕获该句子中该点的任何文本。`slots`对象将在[触发器数据](https://www.home-assistant.io/docs/automation/templating#sentence)中可用。这允许您匹配具有可变部分的句子，如专辑/艺术家名称或图片描述。
+
+例如，句子`play {album} by {artist}`将匹配"play the white album by the beatles"，并在动作模板中提供以下变量：
+
+- `{{ trigger.slots.album }}` - "the white album"
+- `{{ trigger.slots.artist }}` - "the beatles"
+
+通配符将匹配尽可能多的文本，这可能导致意外："play day by day by taken by trees"将匹配`album`为"day"和`artist`为"day by taken by trees"。在模板中包含额外的词可以帮助：`play {album} by artist {artist}`现在可以正确匹配"play day by day by artist taken by trees"。
+
+## 多个触发器
+
+可以为同一规则指定多个触发器。为此，只需在每个触发器的第一行前加上破折号(-)并相应地缩进下一行。每当其中一个触发器触发时，您的自动化规则的处理就会开始。
+
+```yaml
+automation:
+  triggers:
+    # 第一个触发器
+    - trigger: time_pattern
+      minutes: 5
+      # 我们的第二个触发器是日落
+    - trigger: sun
+      event: sunset
+```
+
+## 同一触发器的多个实体ID
+
+可以为同一触发器指定多个实体。为此，使用嵌套列表添加多个实体。每次触发器对列出的任何实体为真时，触发器都会触发并开始处理您的自动化。
+
+```yaml
+automation:
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.one
+        - sensor.two
+        - sensor.three
+```
+
+## 禁用触发器
+
+可以禁用自动化中的每个单独触发器，而不删除它。为此，向触发器添加`enabled: false`。例如：
+
+```yaml
+# 带有禁用触发器的示例脚本
+automation:
+  triggers:
+    # 此触发器不会触发，因为它被禁用。
+    # 当太阳落下时，此自动化不会运行。
+    - enabled: false
+      trigger: sun
+      event: sunset
+
+    # 此触发器将触发，因为它未被禁用。
+    - trigger: time
+      at: "15:32:00"
+```
+
+触发器也可以基于有限模板或蓝图输入禁用。这些仅在加载自动化时评估一次。
+
+```yaml
+blueprint:
+  input:
+    input_boolean:
+      name: 布尔值
+      selector:
+        boolean:
+    input_number:
+      name: 数字
+      selector:
+        number:
+          min: 0
+          max: 100
+
+  trigger_variables:
+    _enable_number: !input input_number
+
+  triggers:
+    - trigger: sun
+      event_type: sunrise
+      enabled: !input input_boolean
+    - trigger: sun
+      event_type: sunset
+      enabled: "{{ _enable_number < 50 }}"
+```
+
+## 合并触发器列表
+
+:::warning
+此功能需要Home Assistant版本2024.10或更高版本。如果在蓝图中使用此功能，请将蓝图的最小版本设置为至少此版本。有关更多详细信息，请参阅蓝图模式文档。
+:::
+
+在某些高级情况下（如带有触发器选择器的蓝图），可能需要将第二个触发器列表插入到主触发器列表中。这可以通过在主触发器列表中添加一个字典，其唯一键为triggers，该键的值包含第二个`triggers`列表来实现。这些将被展平为单个触发器列表。例如：
+
+```yaml
+blueprint:
+  name: 嵌套触发器蓝图
+  domain: automation
+  input:
+    usertrigger:
+      selector:
+        trigger:
+
+triggers:
+  - trigger: event
+    event_type: manual_event
+  - triggers: !input usertrigger
+```
+
+然后，此蓝图自动化可以通过固定的manual_event触发器触发，或通过触发器选择器中选择的任何触发器触发。这也适用于`wait_for_trigger`动作。
+
+## 相关主题
+
+- [添加自定义句子以触发自动化](https://www.home-assistant.io/voice_control/custom_sentences/#adding-a-custom-sentence-to-trigger-an-automation)
