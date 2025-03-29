@@ -1,0 +1,359 @@
+---
+sidebar_position: 9
+sidebar_label: 其他系统
+---
+
+# alternative
+
+## 安装 Home Assistant 操作系统
+
+### 下载合适的镜像
+
+- [VirtualBox](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vdi.zip)(.vdi)
+- [KVM/Proxmox](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.qcow2.xz)(.qcow2)
+- [VMware ESXi/vSphere](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.ova)(.ora)
+
+下载完成后，解压缩镜像文件。如果镜像文件是 ZIP 格式，请解压。
+
+如果您已经在运行支持的虚拟机管理程序，请按照本指南操作。如果您不熟悉虚拟机，可以直接在 Home Assistant Yellow、[树莓派](./raspberrypi.mdx) 或 [ODROID](./odroid.mdx) 上安装 Home Assistant 操作系统。
+
+### 创建虚拟机
+
+将镜像加载到您的虚拟机管理程序中。（注意：您可以自由分配任意资源给虚拟机，请根据您的插件需求分配足够的资源）。
+
+建议最小配置：
+
+- 2 GB 内存
+- 32 GB 存储空间
+- 2 个虚拟 CPU
+
+如果您的使用需要更多资源，这些配置都可以扩展。
+
+### 虚拟机管理程序特定配置
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../src/components/ui/tabs"
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">VirtualBox</TabsTrigger>
+    <TabsTrigger value="2">Unraid</TabsTrigger>
+    <TabsTrigger value="3">KVM (virt-manager)</TabsTrigger>
+    <TabsTrigger value="4">KVM (virt-install)</TabsTrigger>
+    <TabsTrigger value="5">VMware ESXi/vSphere</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    1. 创建新的虚拟机。
+    2. 选择类型为 **Linux**，版本为 **Linux 2.6 / 3.x / 4.x (64位)**。
+    3. 在 **硬件** 下，选择内存大小和 CPU 数量。然后，选择 **启用 EFI**。
+        - 确保 **EFI** 已启用。如果未启用 EFI，HAOS 将无法启动。
+    4. 在 **硬盘** 下，选择 **使用现有的虚拟硬盘文件**，选择上面解压的 VDI 文件。
+    5. 然后转到 **网络 > 适配器 1**。选择 **桥接适配器** 并选择您的网络适配器。
+        请注意，桥接适配器仅在有线以太网连接上工作。不支持在 VirtualBox 主机上使用 Wi-Fi。
+    6. 然后转到 **音频**，选择 **Intel HD Audio** 作为音频控制器。
+
+    默认情况下，VirtualBox 不会释放未使用的磁盘空间。要自动缩小 vdi 磁盘镜像，必须使用主机终端的 `discard` 选项：
+
+    ```
+    VBoxManage storageattach <VM name> --storagectl "SATA" --port 0 --device 0 --nonrotational on --discard on
+    ```
+
+    有关该命令的更多详细信息，请参阅[此处](https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach)。
+    
+  </TabsContent>
+  <TabsContent value="2">
+
+    1. 下载上面的 **.qcow2** 镜像并解压缩。（在 Windows 中使用 **全部解压**）
+    2. 将镜像存储在服务器的 **isos** 共享中。
+    3. 确保在 **设置 > VM 管理器** 中启用了 **启用虚拟机**。
+    4. 创建新的虚拟机：**虚拟机 > 添加虚拟机**。
+    5. 选择类型为 **Linux**，并为虚拟机指定名称和描述。
+    6. 选择要分配给虚拟机的 CPU 核心数和内存大小。
+    7. 在 **主虚拟磁盘位置** 下，选择 **手动**，然后选择 qcow2 镜像。
+    8. 在 **虚拟机控制台键盘** 下选择您的键盘语言。
+    9. 在 **网络源** 下选择 **br0**。
+    10. 在 **网络模型** 下选择 **virtio**。
+    11. 选择要传递给 Home Assistant 的任何 USB 设备，例如 Zigbee 或 Z-Wave 控制器。
+    12. 取消选择 **创建后启动虚拟机**。
+    13. 选择 **创建**。
+    14. 选择新虚拟机的名称，并为磁盘选择容量。在这里，您可以根据需要扩展磁盘。默认为 32 GB。
+    15. 选择新虚拟机的图标，然后选择 **使用控制台启动 (VNC)**。
+
+  </TabsContent>
+  <TabsContent value="3">
+
+    1. 在 `virt-manager` 中创建新的虚拟机。
+    2. 选择 **导入现有磁盘镜像**，提供上面 QCOW2 镜像的路径。
+    3. 选择 **通用默认** 作为操作系统。
+    4. 勾选 **安装前自定义配置**。
+    5. 在 **网络选择** 下，选择您的网桥。
+    6. 在自定义中选择 **概述 > 固件 > UEFI x86_64: ...**。确保选择非安全启动版本的 OVMF（不包含 `secure`、`secboot` 等词），例如 `/usr/share/edk2/ovmf/OVMF_CODE.fd`。
+    7. 点击 **添加硬件**（左下角），选择 **通道**。
+    8. 选择设备类型：**unix**。
+    9. 选择名称：**org.qemu.guest_agent.0**。
+    10. 最后，选择 **开始安装**（左上角）。
+
+  </TabsContent>
+    <TabsContent value="4">
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi
+    ```
+    如果您要附加 USB 设备，需要添加选项 `--hostdev busID.deviceId`。您可以通过 `lsusb` 命令发现这些 ID。例如，如果 `lsusb` 输出为：
+    ```
+    Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 003 Device 004: ID 30c9:0052 Luxvisions Innotech Limited Integrated RGB Camera
+    Bus 003 Device 003: ID 1a86:55d4 QinHeng Electronics SONOFF Zigbee 3.0 USB Dongle Plus V2
+    Bus 003 Device 002: ID 06cb:00fc Synaptics, Inc.
+    Bus 003 Device 005: ID 8087:0033 Intel Corp.
+    Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    ```
+    您可以在 `Bus 003 Device 003` 处识别到 Sonoff 设备。因此，安装虚拟机的命令将变为：
+
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi --hostdev 003.003
+    ```
+
+    请注意，此配置（总线 003，设备 003）只是一个示例，您的设备可能位于其他总线或具有其他设备 ID。请使用 `lsusb` 检查您的 USB 设备的正确 ID。
+
+  </TabsContent>
+  <TabsContent value="5">
+    使用 "E1001" 或 "E1001E" 虚拟网络适配器。使用 VMware 的 "VMXnet3" 虚拟网络适配器时，已确认存在 mDNS/多播发现问题。
+  </TabsContent>
+</Tabs>
+
+### 启动虚拟机
+
+1. 启动虚拟机。
+2. 观察 Home Assistant 操作系统的启动过程。
+
+3. 完成后，您可以通过 [homeassistant.local:8123](http://homeassistant.local:8123/) 访问 Home Assistant。如果您运行的是较旧版本的 Windows 或具有更严格的网络配置，您可能需要通过 [homeassistant:8123](http://homeassistant:8123/) 或 `http://X.X.X.X:8123`（将 X.X.X.X 替换为虚拟机的 IP 地址）访问 Home Assistant。
+
+安装并可以访问 Home Assistant 操作系统后，您可以继续进行初始化设置。
+
+## 安装 Home Assistant 容器版（Container）
+
+### Synology NAS
+
+现在，Synology 通过 Container Manager 包支持容器管理，允许您无需命令行即可安装 Home Assistant。有关该包的详细信息（包括兼容性信息，如果您的 NAS 受支持），请参阅 https://www.synology.com/en-us/dsm/packages/ContainerManager。步骤如下：
+
+- 在 Synology NAS 上安装 Docker "Container Manager" 包
+
+- 启动 Container Manager 应用并转到 "Registry" 部分
+
+- 在注册表中找到 "homeassistant/home-assistant" 并点击 "Download"。选择 "stable" 标签。
+
+- 等待一段时间，直到您的 NAS 拉取完镜像
+
+- 转到 Container Manager 应用的 "Image" 部分
+
+- 点击 "Launch"
+
+- 在 "Network" 中选择 "Use same network as Docker Host" 并点击 Next
+
+- 选择您想要的容器名称（例如，"homeassistant"）
+
+- 如果需要，设置 "Enable auto-restart"
+
+- 点击 "Advanced Settings"。为确保 Home Assistant 显示正确的时区，转到 "Environment" 标签并点击加号，然后添加 `variable` = `TZ` 和 `value` = `Asia/Shanghai`，选择[您的正确时区](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)。点击 Save 退出 Advanced Settings。
+
+- 点击 Next
+
+- 在 "Volume Settings" 中点击 "Add Folder"，选择现有文件夹或添加新文件夹（例如，在 "docker" 共享文件夹中，添加名为 "homeassistant" 的新文件夹，然后在该新文件夹中添加另一个名为 "config" 的新文件夹），然后点击 Select。然后将 "mount path" 编辑为 "/config"。这配置了 Home Assistant 存储配置和日志的位置。
+
+- 确保选中 "Run this container after the wizard is finished" 并点击 Done
+
+- 您的 Docker 中的 Home Assistant 现在应该运行，并将从 Docker 主机的 8123 端口提供 Web 界面（这将是您的 Synology NAS IP 地址 - 例如 `http://192.168.1.10:8123`）
+
+如果使用内置防火墙，您还必须将端口 8123 添加到允许列表中。这可以在 "Control Panel -> Security" 中找到，然后在 Firewall 标签中。点击 Firewall Profile 下拉框旁边的 "Edit Rules"。创建新规则并选择 "Custom" 作为 Ports 并添加 8123。根据需要编辑 Source IP 或保留默认的 "All"。Action 应保持为 "Allow"。
+
+要使用 Z-Wave USB 设备进行 Z-Wave 控制，HA Docker 容器需要额外配置才能访问 USB 设备。虽然有多种方法可以做到这一点，但在撰写本文时，授予访问权限的最低权限方式只能通过终端执行。请参阅此页面以配置对 Synology NAS 的终端访问：
+
+https://www.synology.com/en-global/knowledgebase/DSM/help/DSM/AdminCenter/system_terminal
+
+:::tip 
+[请参阅此页面了解如何通过 SSH 访问终端](https://www.synology.com/en-global/knowledgebase/DSM/tutorial/General_Setup/How_to_login_to_DSM_with_root_permission_via_SSH_Telnet)
+:::
+
+按如下方式调整以下终端命令：
+
+- 将 `/PATH_TO_YOUR_CONFIG` 指向您要存储配置的文件夹 - 确保保留 `:/config` 部分
+
+- 将 `/PATH_TO_YOUR_USB_STICK` 替换为您的 USB 设备的路径（例如，对于大多数 Synology 用户为 `/dev/ttyACM0`）
+
+- 将 "Australia/Melbourne" 替换为[您的时区](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)。
+
+在终端中运行它。
+
+```
+sudo docker run --restart always -d --name homeassistant -v /PATH_TO_YOUR_CONFIG:/config --device=/PATH_TO_YOUR_USB_STICK -e TZ=Asia/Shanghai --net=host ghcr.io/home-assistant/home-assistant:stable
+```
+
+通过[按照此处的说明](https://www.home-assistant.io/integrations/zwave_js)完成 Z-Wave 配置的其余部分。
+
+注意：要在 Synology NAS 上的 Docker 中更新 Home Assistant，您只需执行以下操作：
+
+- 转到 "Container Manager" 应用并转到 "Image" 部分
+- 在 Image 中找到 "homeassistant/home-assistant" 并点击 "Update"。
+- 等待系统消息/通知出现，表示下载已完成（没有进度条）
+- 转到 "Container" 部分
+- 如果容器正在运行，请停止它
+- 右键点击它并选择 "Action"->"Reset"。您不会丢失任何数据，因为所有文件都存储在您的配置目录中
+- 再次启动容器 - 它将使用新的 Home Assistant 镜像启动
+
+注意：要在 Synology NAS 上重启 Home Assistant，您只需执行以下操作：
+
+- 转到 "Container Manager" 应用并转到 "Container" 部分
+- 右键点击它并选择 "Action"->"Restart"。
+
+:::note
+如果您想在 Synology Docker 上的 Home Assistant 中使用 USB 蓝牙适配器或 Z-Wave USB 设备，这些说明不会正确配置容器以访问 USB 设备。要在 Synology Docker Home Assistant 上配置这些设备，您可以按照 Phil Hawthorne 提供的[此处](https://philhawthorne.com/installing-home-assistant-io-on-a-synology-diskstation-nas/)的说明进行操作。
+:::
+
+### QNAP NAS
+
+QNAP 的 QTS 支持 Docker，允许您无需命令行即可使用 Docker 安装 Home Assistant。有关该包的详细信息（包括兼容性信息，如果您的 NAS 受支持），请参阅 https://www.qnap.com/solution/container_station/en/index.php
+
+步骤如下：
+
+- 在 Qnap NAS 上安装 "Container Station" 包
+- 启动 Container Station 并转到 "Create Container" 部分
+- 使用 Docker Hub 搜索镜像 "homeassistant/home-assistant" 并点击 "Install"。注意您 NAS 的 CPU 架构。对于 ARM CPU 类型，正确的镜像是 "homeassistant/armhf-homeassistant"
+- 选择 "stable" 版本并点击下一步
+- 选择您想要的容器名称（例如，"homeassistant"）
+- 点击 "Advanced Settings"
+- 在 "Shared Folders" 中点击 "Volume from host" > "Add"，选择现有文件夹或添加新文件夹。挂载点必须是 `/config`，这样 Home Assistant 将使用它来存储配置和日志。
+- 在 "Network" 中选择 Network Mode 为 "Host"
+- 为确保 Home Assistant 显示正确的时区，转到 "Environment" 标签并点击加号，然后添加 `variable` = `TZ` 和 `value` = `Asia/Shanghai`，选择[您的正确时区](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+- 点击 "Create"
+- 等待一段时间，直到您的 NAS 创建完容器
+- 您的 Docker 中的 Home Assistant 现在应该运行，并将从 Docker 主机的 8123 端口提供 Web 界面（这将是您的 Qnap NAS IP 地址 - 例如 http://192.xxx.xxx.xxx:8123
+
+注意：要在 Qnap NAS 上的 Docker 中更新 Home Assistant，您只需删除容器和镜像，然后重新执行步骤（不要删除 "config" 文件夹）。
+
+### 社区说明
+
+请注意，一些用户报告在 ARM QNAP 系统（例如 TS-233）上使用 Container Station 3 创建 Home Assistant 容器时遇到问题。一个可能的解决方法是基于 YAML 文件的 "Docker compose" 方法（请参阅 "Docker compose" 部分）。在 QNAP Container Station 3 UI 中，可以通过转到 "Applications" 部分并点击 "Create" 来访问此功能。然后会提示您输入 YAML 代码，可以从 "Docker compose" 部分显示的代码中复制。请注意以两种方式修改此代码：首先，添加第一行 "version: '3'"；其次，将文本 "/PATH_TO_YOUR_CONFIG" 替换为您 NAS 系统上的有效路径，例如 "/share/Container/HomeAssistant/config"。
+
+Home Assistant 容器运行后，应该可以通过 `http://<host>:8123`（替换为系统的主机名或 IP）访问 Home Assistant。您可以继续进行初始化设置。
+
+### 重启 Home Assistant
+
+如果更改了配置，您必须重启服务器。为此，您有 3 个选项。
+
+1. 在您的 Home Assistant UI 中，转到 **设置 > 系统** 并点击 **重启** 按钮。
+2. 您可以转到 **开发者工具 > 操作**，选择 `homeassistant.restart` 并选择 **执行操作**。
+3. 从终端重启它。
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker restart homeassistant
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    docker compose restart
+    ```
+  </TabsContent>
+</Tabs>
+
+### Docker compose 
+
+:::tip
+
+`docker compose` 应该 [已经安装](https://www.docker.com/blog/announcing-compose-v2-general-availability/) 在您的系统上。如果没有，您可以 [手动](https://docs.docker.com/compose/install/linux/) 安装它。
+
+:::
+
+随着 Docker 命令变得更加复杂，切换到 `docker compose` 可以更可取并支持自动重启失败或系统重启。创建一个 `compose.yml` 文件：
+
+```
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - /PATH_TO_YOUR_CONFIG:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+
+```
+
+开始运行：
+
+```
+docker compose up -d
+```
+
+一旦 Home Assistant 容器运行，Home Assistant 应该可以通过 `http://<host>:8123`（替换为系统的主机名或 IP）访问。您可以继续进行初始化设置。
+
+### Exposing devices 
+
+为了使用 Zigbee 或其他需要访问设备的集成，您需要将适当的设备映射到容器中。确保运行容器的用户具有访问 `/dev/tty*` 文件的正确权限，然后向容器指令添加设备映射：
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker run ... --device /dev/ttyUSB0:/dev/ttyUSB0 ...
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    services:
+      homeassistant:
+        ...
+        devices:
+          - /dev/ttyUSB0:/dev/ttyUSB0
+    ```
+  </TabsContent>
+</Tabs>
+
+### Optimizations 
+
+Home Assistant 容器使用替代内存分配库 [jemalloc](http://jemalloc.net/) 进行更好的内存管理并加速 Python 运行时。
+
+由于 jemalloc 配置使用的可以导致某些硬件上出现的问题，可以禁用通过传递环境变量 `DISABLE_JEMALLOC` 与任何值，例如：
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">Docker CLI</TabsTrigger>
+    <TabsTrigger value="2">Docker Compose</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    ```
+    docker run ... -e "DISABLE_JEMALLOC=true" ...
+    ```
+  </TabsContent>
+  <TabsContent value="2">
+    ```
+    services:
+      homeassistant:
+      ...
+        environment:
+          DISABLE_JEMALLOC: true
+    ```
+  </TabsContent>
+</Tabs>
+
+错误消息 `<jemalloc>: Unsupported system page size` 是已知指示器。
+
+## Community provided guides 
+
+更多安装指南可以在我们的[社区论坛](https://community.home-assistant.io/tags/c/community-guides/51/installation)上找到。
+
+这些社区指南按原样提供。其中一些安装方法比上述方法更有限。由于平台的限制，某些集成可能无法工作。
+
+
+

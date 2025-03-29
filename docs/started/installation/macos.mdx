@@ -1,0 +1,154 @@
+---
+sidebar_position: 7
+
+---
+
+# macos 系统
+
+## 安装 Home Assistant 操作系统
+
+### 下载适当的镜像
+
+- [VirtualBox](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vdi.zip)(.vdi)
+
+下载后，解压镜像。如果镜像是 ZIP 文件，请解压它。
+
+如果您已经在运行支持的虚拟机管理程序，请按照本指南操作。如果您不熟悉虚拟机，请直接在 Home Assistant Yellow、[Raspberry Pi](./raspberrypi.mdx) 或 [ODROID](./odroid.mdx) 上安装 Home Assistant OS。
+
+- 如果您的 Mac 不支持 VirtualBox，并且您有使用虚拟机的经验，您可以尝试在 [UTM](https://mac.getutm.app/) 上运行 Home Assistant 操作系统。
+
+### 创建虚拟机
+
+将设备镜像加载到您的虚拟机管理程序中。（注意：您可以自由分配任意资源给虚拟机，请根据您的附加组件需求分配足够的资源）。
+
+最低推荐分配：
+
+- 2 GB 内存
+- 32 GB 存储
+- 2 个虚拟 CPU
+
+如果您的使用需要更多资源，所有这些都可以扩展。
+
+### 虚拟机管理程序特定配置
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../src/components/ui/tabs"
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">VirtualBox</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    1. 创建新的虚拟机。
+    2. 选择类型 **Linux** 和版本 **Linux 2.6 / 3.x / 4.x (64 位)**。
+    3. 在 **硬件** 下，选择内存量和 CPU 数量。然后，选择 **启用 EFI**。
+        - 确保 **EFI** 已启用。如果 EFI 未启用，HAOS 将无法启动。
+    4. 在 **硬盘** 下，选择 **使用现有的虚拟硬盘文件**，选择上面解压的 VDI 文件。
+    5. 然后转到 **网络 > 适配器 1**。选择 **桥接适配器** 并选择您的网络适配器。
+        请注意，桥接适配器仅在有线以太网连接上工作。不支持在 VirtualBox 主机上使用 Wi-Fi。
+    6. 然后转到 **音频** 并选择 **Intel HD Audio** 作为音频控制器。
+
+    默认情况下，VirtualBox 不会释放未使用的磁盘空间。要自动缩小 vdi 磁盘镜像，必须使用主机终端的 `discard` 选项：
+
+    ```bash
+    VBoxManage storageattach <VM name> --storagectl "SATA" --port 0 --device 0 --nonrotational on --discard on
+    ```
+
+    有关命令的更多详细信息可以在[这里](https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach)找到。
+    
+  </TabsContent>
+</Tabs>
+
+### 启动您的虚拟机
+
+1. 启动虚拟机。
+2. 观察 Home Assistant 操作系统的启动过程。
+
+3. 完成后，您将能够在 [homeassistant.local:8123](http://homeassistant.local:8123/) 访问 Home Assistant。如果您运行的是较旧版本的 Windows 或具有更严格的网络配置，您可能需要通过 [homeassistant:8123](http://homeassistant:8123/) 或 `http://X.X.X.X:8123` 访问 Home Assistant（将 X.X.X.X 替换为您的虚拟机的 IP 地址）。
+
+安装并可以访问 Home Assistant 操作系统后，您可以继续进行初始化设置。
+
+## 安装 Home Assistant Core
+
+:::danger 警告
+
+这是一个高级安装过程，某些步骤可能与您的系统不同。考虑到这种安装类型的性质，我们假设您可以处理本文档与您使用的系统配置之间的细微差异。如有疑问，请考虑使用其他安装方法，因为它们可能更适合。
+
+:::
+
+### 先决条件
+
+本指南假设您已经设置了操作系统并安装了 Python 3.13（包括包 `python3-dev`）或更新版本。
+
+### 安装依赖项
+
+在开始之前，请确保您的系统完全更新，本指南中的所有包都使用 `apt` 安装，如果您的操作系统没有，请寻找替代方案。
+
+```
+sudo apt-get update
+sudo apt-get upgrade -y
+```
+
+安装依赖项：
+
+```
+sudo apt-get install -y python3 python3-dev python3-venv python3-pip bluez libffi-dev libssl-dev libjpeg-dev zlib1g-dev autoconf build-essential libopenjp2-7 libtiff6 libturbojpeg0-dev tzdata ffmpeg liblapack3 liblapack-dev libatlas-base-dev
+```
+
+上述列出的依赖项可能因您的系统或个人使用 Home Assistant 而有所不同或缺失。
+
+### 创建账户
+
+添加一个名为 `homeassistant` 的 Home Assistant Core 账户。由于此账户仅用于运行 Home Assistant Core，因此添加了 `-rm` 额外参数以创建系统账户并创建主目录。参数 `-G dialout,gpio,i2c` 将用户添加到 `dialout`、`gpio` 和 `i2c` 组。第一个是使用 Z-Wave 和 Zigbee 控制器所必需的，而第二个是与 GPIO 通信所必需的。
+
+```
+sudo useradd -rm homeassistant -G dialout,gpio,i2c
+```
+
+### 创建虚拟环境
+
+首先，我们将为 Home Assistant Core 的安装创建一个目录，并将所有者更改为 `homeassistant` 账户。
+
+```
+sudo mkdir /srv/homeassistant
+sudo chown homeassistant:homeassistant /srv/homeassistant
+```
+
+接下来是创建并切换到 Home Assistant Core 的虚拟环境。这将作为 `homeassistant` 账户完成。
+
+```
+sudo -u homeassistant -H -s
+cd /srv/homeassistant
+python3 -m venv .
+source bin/activate
+```
+
+一旦您激活了虚拟环境（注意提示更改为 (`homeassistant`) `homeassistant@raspberrypi:/srv/homeassistant $`），您需要运行以下命令来安装所需的 Python 包。
+
+```
+python3 -m pip install wheel
+```
+
+一旦您安装了所需的 Python 包，现在就是安装 Home Assistant Core 的时候了！
+
+```
+pip3 install homeassistant==2025.3.4
+```
+
+**故障排除**：如果您在环境中看不到上述版本的 Home Assistant 包，请确保您已安装正确的 Python 版本，如先决条件中定义的那样。
+
+首次启动 Home Assistant Core。这将为您完成安装，自动在 `/home/homeassistant` 目录中创建 `.homeassistant` 配置目录，并安装任何基本依赖项。
+
+```
+hass
+```
+
+您现在可以通过 Web 界面访问您的安装，地址为 `http://homeassistant.local:8123`
+
+如果此地址不起作用，您也可以尝试 `http://localhost:8123` 或 `http://X.X.X.X:8123`（将 X.X.X.X 替换为您机器的 IP 地址）。
+
+:::note
+
+当您第一次运行 `hass` 命令时，它将下载、安装和缓存必要的库/依赖项。此过程可能需要 5 到 10 分钟。在此期间，访问 Web 界面时可能会出现**无法访问站点**错误。这只会发生在第一次。后续重启会快得多。
+
+:::
+

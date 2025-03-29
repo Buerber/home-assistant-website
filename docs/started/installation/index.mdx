@@ -1,0 +1,80 @@
+---
+title: 安装
+description: 开始使用 Home Assistant 的第一步就是安装。这里提供了多种安装方式，适合不同场景和不同技术水平的用户。
+sidebar_position: 1
+sidebar_label: 安装
+
+keywords:
+  - HA安装
+  - Home Assistant 安装指南
+  - Home Assistant 安装
+---
+
+import { Badge } from '../../../src/components/ui/badge'
+
+# Home Assistant 安装
+
+<p className='text-xl text-secondary-foreground'>使用 Home Assistant 的第一步是将其安装在设备上。我们提供多种安装方式，适合不同场景和不同技术水平的用户。</p>
+
+<div className="flex gap-1.5 items-center mb-5">
+<Badge className="bg-green-500">Easiest</Badge> 
+## 即插即用：Home Assistant Green
+</div>
+
+价格实惠的 Home Assistant Green 是开始使用 Home Assistant 最简单的方式。它支持即插即用，并且预装了 Home Assistant。
+
+<div className="flex gap-1.5 items-center mb-5">
+<Badge className="bg-green-500">最简单</Badge> 
+## 自己动手：树莓派安装
+</div>
+
+树莓派是一款低成本的迷你电脑，是运行 Home Assistant 最受欢迎的平台之一。如果您想要自己动手安装并获得经验，这是一个很好的起点。
+
+<div className="flex gap-1.5 items-center mb-5">
+<Badge className="bg-yellow-500">简单</Badge> 
+## 功能扩展：Home Assistant Yellow
+</div>
+
+可扩展的 Home Assistant Yellow 包含了构建稳健智能家居所需的所有组件。您只需要自备树莓派计算模块即可。
+
+<div className="flex gap-1.5 items-center mb-5">
+<Badge className="bg-red-500">中等难度</Badge> 
+## 功能扩展：在其他硬件上安装
+</div>
+
+Home Assistant 可以安装在各种硬件上，比如 Odroid 或通用的 x86-64 机器。即使您几乎没有 Linux 经验，Home Assistant 操作系统也能让您在这些设备上轻松安装。
+
+<div className="flex gap-1.5 items-center mb-5">
+<Badge className="bg-violet-500">专家</Badge> 
+## 高级安装方法
+</div>
+
+Home Assistant 提供四种不同的安装方法。我们推荐使用 Home Assistant 操作系统。其他方法适用于有特殊需求的高级用户，例如在虚拟化环境（如 Proxmox）中运行，或在现有操作系统（如 Windows、macOS、Linux）上运行：
+
+- **Home Assistant Container**：基于容器的独立 Home Assistant Core 安装（如 Docker）。
+- **Home Assistant Supervised**：手动安装 Supervisor。
+- ** Home Assistant Core**：使用 Python 虚拟环境手动安装。
+
+请注意，虽然这些安装方法可能为高级用户提供一些特性，但也可能有一些重要限制。例如，可能无法使用插件和其他重要的 Home Assistant 功能。
+
+
+import { Check, X} from 'lucide-react'
+
+|     | HA OS<sup>1</sup> | Container<sup>1</sup>	| Core<sup>1</sup>      | Supervised<sup>1</sup> |
+| :---: | :---: | :---: | :---: | :---: |
+| 自动化 | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> |
+| 仪表盘 | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> |
+| 集成 | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> |
+| 插件 | <Check strokeWidth={4} className='text-green-500' /> | <X strokeWidth={4} className=' text-red-500' />  | <X strokeWidth={4} className=' text-red-500' /> | <Check strokeWidth={4} className='text-green-500' /> |
+| Blueprints | <Check strokeWidth={4} className='text-green-500' /> | <X strokeWidth={4} className=' text-red-500' />  | <X strokeWidth={4} className=' text-red-500' />  | <Check strokeWidth={4} className='text-green-500' /> |
+| 一键更新 | <Check strokeWidth={4} className='text-green-500' /> | <X strokeWidth={4} className=' text-red-500' />  | <X strokeWidth={4} className=' text-red-500' />  | <Check strokeWidth={4} className='text-blue-500' /><sup>2</sup> |
+| 备份 | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> | <Check strokeWidth={4} className='text-green-500' /> |
+
+
+1: 名称已简化。完整的安装方式名称为：
+- Home Assistant Operating System（操作系统）
+- Home Assistant Container（容器版）
+- Home Assistant Core（核心版）
+- Home Assistant Supervised（监管版）
+
+2: Home Assistant Supervised 需要用户自行维护操作系统。

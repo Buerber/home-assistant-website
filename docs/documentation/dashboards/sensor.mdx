@@ -1,0 +1,125 @@
+---
+sidebar_label: 传感器
+---
+
+import { Pencil, EllipsisVertical } from 'lucide-react'
+import { Separator } from "../../../src/components/ui/separator"
+
+# 传感器卡片
+
+<p className="text-xl font-semibold">
+传感器卡片让你可以快速查看传感器状态，并可选择性地使用图表来可视化随时间变化的情况。
+</p>
+
+![传感器卡片的截图。](./img/sensor_1.png)
+<p className='text-center font-extralight'>传感器卡片的截图。</p>
+
+要将传感器状态卡片添加到你的用户界面：
+
+1. 在屏幕右上角，选择编辑<Pencil className='align-middle inline ' size={18}  />按钮。
+    - 如果这是你首次编辑仪表板，会出现**编辑仪表板**对话框。
+        - 通过编辑仪表板，你将接管这个仪表板的控制权。
+        - 这意味着当新的仪表板元素可用时，它将不再自动更新。
+        - 一旦你接管控制权，你将无法让这个特定的仪表板恢复自动更新。不过，你可以创建一个新的默认仪表板。
+        - 要继续，在对话框中，选择三点菜单<EllipsisVertical className='align-middle inline' size={18} />，然后选择**接管控制**。
+
+2. [添加卡片并自定义操作和功能](https://www.home-assistant.io/dashboards/cards/#adding-cards-to-your-dashboard)到你的仪表板。
+
+此卡片的所有选项都可以通过用户界面进行配置。
+
+
+## YAML 配置 
+当你使用YAML模式或只是更喜欢在UI中的代码编辑器中使用YAML时，以下YAML选项可用。
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### 配置变量  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>type <span className="text-xs text-red-400">字符串 必填</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`sensor`</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>entity <span className="text-xs text-red-400">字符串 必填</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`sensor`域的实体ID。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>icon <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>卡片图标。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>name <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>卡片名称。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>graph <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表类型（`none`或`line`）。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>unit <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>测量单位。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> detail <span className="text-xs text-gray-400">整数 (可选，默认：1)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表详细程度`1`或`2`（`1` = 每小时一个点，`2` = 每小时六个点）。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> hours_to_show <span className="text-xs text-gray-400">整数 (可选，默认：24)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表显示的小时数。最小为1小时。较大的值可能导致渲染延迟，特别是当选定的实体有很多状态变化时。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> limits <span className="text-xs text-gray-400">映射 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表Y轴的限制。</p>
+
+        <div className='pl-10'>
+            <div>
+                <p className="m-0 pb-2" style={{margin:'0'}}> min <span className="text-xs text-gray-400">浮点数 (可选)</span></p>
+                <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表Y轴的最小值。</p>
+                <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>默认：显示值中的最小样本。</p>
+                <Separator className="my-4" />
+            </div>
+
+            <div>
+                <p className="m-0 pb-2" style={{margin:'0'}}> max <span className="text-xs text-gray-400">浮点数 (可选)</span></p>
+                <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表Y轴的最大值。</p>
+                <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>默认：显示值中的最大样本。</p>
+                {/* <Separator className="my-4" /> */}
+            </div>
+        </div>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> theme <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>使用任何已加载的主题覆盖此卡片的主题。有关主题的更多信息，请参阅[前端文档](https://www.home-assistant.io/integrations/frontend/)。</p>
+        {/* <Separator className="my-4" /> */}
+    </div>
+</div>
+
+
+### 示例
+
+```yaml
+type: sensor
+entity: sensor.illumination
+name: Illumination
+```
+
+
+## 相关主题
+- [主题](https://www.home-assistant.io/integrations/frontend/)
+- [仪表板卡片](https://www.home-assistant.io/dashboards/cards/)

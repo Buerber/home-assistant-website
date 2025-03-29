@@ -1,0 +1,33 @@
+---
+sidebar_label: Masonry
+---
+
+# Masonry视图
+import { Separator } from "../../../src/components/ui/separator"
+
+<p className="text-xl font-semibold">
+Masonry视图根据卡片大小将卡片排列在列中。
+</p>
+
+![Masonry视图的截图。](./img/masonry_1.png)
+<p className="text-center font-extralight">Masonry视图的截图。</p>
+
+Masonry根据大小将卡片排列在列中，并将下一张卡片放置在仪表板上最小卡片的下方。
+
+![Masonry根据大小排列卡片。](./img/masonry_2.png)
+<p className="text-center font-extralight">Masonry根据大小排列卡片。</p>
+
+要对卡片进行分组，你必须使用[水平堆叠](https://www.home-assistant.io/dashboards/horizontal-stack/)、[垂直堆叠](https://www.home-assistant.io/dashboards/vertical-stack/)或[网格](https://www.home-assistant.io/dashboards/grid/)卡片。
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### 配置变量  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>type <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`masonry`</p>
+        {/* <Separator className="my-4" /> */}
+    </div>
+</div>
+
+## 相关主题
+- [面板视图](https://www.home-assistant.io/dashboards/panel/)
+- [侧边栏视图](https://www.home-assistant.io/dashboards/sidebar/)

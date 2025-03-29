@@ -1,0 +1,166 @@
+---
+sidebar_label: 统计图表
+---
+
+import { Pencil, EllipsisVertical } from 'lucide-react'
+import { Separator } from "../../../src/components/ui/separator"
+
+# 统计图表卡片
+
+<p className="text-xl font-semibold">
+统计图表卡片允许你为列出的每个实体显示统计数据图表。
+</p>
+
+![非计量实体和`chart_type`为`line`的统计图表卡片截图。](./img/statistics_graph_1.png)
+<p className='text-center font-extralight'>非计量实体和`chart_type`为`line`的统计图表卡片截图。</p>
+
+![计量实体和`chart_type`为`bar`的统计图表卡片截图。](./img/statistics_graph_2.png)
+<p className='text-center font-extralight'>计量实体和`chart_type`为`bar`的统计图表卡片截图。</p>
+
+对于支持的传感器，系统每5分钟和每小时收集一次统计数据。5分钟统计数据将保留[记录器配置](https://www.home-assistant.io/integrations/recorder/#purge_keep_days)中设定的持续时间，而小时统计数据将无限期保留。它会保留传感器在特定小时的`最小值`、`最大值`和`平均值`，或者计量实体的`总和`。
+
+如果你的传感器不支持统计功能，请查看[这里](https://www.home-assistant.io/more-info/statistics/)。
+
+要将统计图表卡片添加到你的用户界面：
+
+1. 在屏幕右上角，选择编辑<Pencil className='align-middle inline ' size={18}  />按钮。
+    - 如果这是你首次编辑仪表板，会出现**编辑仪表板**对话框。
+        - 通过编辑仪表板，你将接管这个仪表板的控制权。
+        - 这意味着当新的仪表板元素可用时，它将不再自动更新。
+        - 一旦你接管控制权，你将无法让这个特定的仪表板恢复自动更新。不过，你可以创建一个新的默认仪表板。
+        - 要继续，在对话框中，选择三点菜单<EllipsisVertical className='align-middle inline' size={18} />，然后选择**接管控制**。
+
+2. [添加卡片并自定义操作和功能](https://www.home-assistant.io/dashboards/cards/#adding-cards-to-your-dashboard)到你的仪表板。
+
+此卡片的所有选项都可以通过用户界面进行配置。
+
+## YAML 配置 
+当你使用YAML模式或只是更喜欢在UI中的代码编辑器中使用YAML时，以下YAML选项可用。
+
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### 配置变量  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> type <span className="text-xs text-red-400">字符串 必填</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`statistics-graph`</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> entities <span className="text-xs text-red-400">列表 必填</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>实体ID列表或`entity`对象（见下文），或外部统计ID</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> days_to_show <span className="text-xs text-gray-400">整数 (可选，默认：30)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表显示的天数。最小为1天。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> chart_type <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>图表应该渲染为`bar`（柱状图）还是`line`（线图）。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> stat_types <span className="text-xs text-gray-400">列表 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>要渲染的统计类型。`min`（最小值），`max`（最大值），`mean`（平均值），`sum`（总和），`state`（状态），`change`（变化）</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> title <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>卡片标题。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> period <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>渲染图表的时间段。`5minute`（5分钟），`hour`（小时），`day`（天），`week`（周）或`month`（月）。如果`energy_date_selection`为true且未定义period，图表周期将根据所选日期范围在月/日/时之间自动选择。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> hide_legend <span className="text-xs text-gray-400">布尔值 (可选，默认：false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果为true，图例将被隐藏。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> logarithmic_scale <span className="text-xs text-gray-400">布尔值 (可选，默认：false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果为true，Y轴上的数值将以对数刻度显示。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> min_y_axis <span className="text-xs text-gray-400">浮点数 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Y轴范围的下限。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> max_y_axis <span className="text-xs text-gray-400">浮点数 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Y轴范围的上限。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> fit_y_data <span className="text-xs text-gray-400">布尔值 (可选，默认：false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果为true，已配置的Y轴边界将自动扩展（但不缩小）以适应数据。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> expand_legend <span className="text-xs text-gray-400">布尔值 (可选，默认：false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果为true，图例将最初显示所有项目。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> energy_date_selection <span className="text-xs text-gray-400">布尔值 (可选，默认：false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果为true，图表日期范围将跟随同一视图上`energy-date-selection`卡片上选择的日期，类似于能源卡片。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> collection_key <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>如果使用`energy_date_selection`，你可以设置一个自定义键来匹配`energy-date-selection`卡片的可选键。这通常不是必需的，但如果在同一视图上使用多个日期选择卡片，则可能很有用。</p>
+        <Separator className="my-4" />
+    </div>
+
+</div>
+
+### 实体的选项 
+如果你将实体定义为对象而不是字符串，你可以添加更多自定义和配置：
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### 配置变量  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> entity <span className="text-xs text-red-400">字符串 必填</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>实体ID。</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> name <span className="text-xs text-gray-400">字符串 (可选)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>覆盖友好名称。</p>
+        {/* <Separator className="my-4" /> */}
+    </div>
+</div>
+
+### 示例
+
+```yaml
+type: statistics-graph
+title: 'My Graph'
+entities:
+  - sensor.outside_temperature
+  - entity: sensor.inside_temperature
+    name: Inside
+```
+
+## 相关主题
+- [主题](https://www.home-assistant.io/integrations/frontend/)
+- [仪表板卡片](https://www.home-assistant.io/dashboards/cards/)

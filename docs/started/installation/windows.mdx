@@ -1,0 +1,263 @@
+---
+sidebar_position: 8
+
+---
+
+# windows 系统
+
+## 安装 Home Assistant 操作系统
+
+### 下载适当的镜像
+
+- [VirtualBox](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vdi.zip)(.vdi)
+- [VMware Workstation](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vmdk.zip)(.vmdk)
+- [Hyper-V](https://github.com/home-assistant/operating-system/releases/download/15.1/haos_ova-15.1.vhdx.zip)(.vhdx)
+
+下载后，解压镜像。如果镜像是 ZIP 文件，请解压它。
+
+如果您已经在运行支持的虚拟机管理程序，请按照本指南操作。如果您不熟悉虚拟机，请直接在 Home Assistant Yellow、[Raspberry Pi](./raspberrypi.mdx) 或 [ODROID](./odroid.mdx) 上安装 Home Assistant OS。
+
+### 创建虚拟机
+
+将设备镜像加载到您的虚拟机管理程序中。（注意：您可以自由分配任意资源给虚拟机，请根据您的附加组件需求分配足够的资源）。
+
+最低推荐分配：
+
+- 2 GB 内存
+- 32 GB 存储
+- 2 个虚拟 CPU
+
+如果您的使用需要更多资源，所有这些都可以扩展。
+
+### 虚拟机管理程序特定配置
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../src/components/ui/tabs"
+
+<Tabs defaultValue="1">
+  <TabsList>
+    <TabsTrigger value="1">VirtualBox</TabsTrigger>
+    <TabsTrigger value="2">Unraid</TabsTrigger>
+    <TabsTrigger value="3">KVM (virt-manager)</TabsTrigger>
+    <TabsTrigger value="4">KVM (virt-install)</TabsTrigger>
+    <TabsTrigger value="5">VMware Workstation</TabsTrigger>
+    <TabsTrigger value="6">Hyper-V</TabsTrigger>
+  </TabsList>
+  <TabsContent value="1">
+    1. 创建新的虚拟机。
+    2. 选择类型 **Linux** 和版本 **Linux 2.6 / 3.x / 4.x (64 位)**。
+    3. 在 **硬件** 下，选择内存量和 CPU 数量。然后，选择 **启用 EFI**。
+        - 确保 **EFI** 已启用。如果 EFI 未启用，HAOS 将无法启动。
+    4. 在 **硬盘** 下，选择 **使用现有的虚拟硬盘文件**，选择上面解压的 VDI 文件。
+    5. 然后转到 **网络 > 适配器 1**。选择 **桥接适配器** 并选择您的网络适配器。
+        请注意，桥接适配器仅在有线以太网连接上工作。不支持在 VirtualBox 主机上使用 Wi-Fi。
+    6. 然后转到 **音频** 并选择 **Intel HD Audio** 作为音频控制器。
+
+    默认情况下，VirtualBox 不会释放未使用的磁盘空间。要自动缩小 vdi 磁盘镜像，必须使用主机终端的 `discard` 选项：
+
+    ```
+    VBoxManage storageattach <VM name> --storagectl "SATA" --port 0 --device 0 --nonrotational on --discard on
+    ```
+
+    有关命令的更多详细信息可以在[这里](https://www.virtualbox.org/manual/ch08.html#vboxmanage-storageattach)找到。
+    
+  </TabsContent>
+  <TabsContent value="2">
+
+    1. 下载上面的 **.qcow2** 镜像并解压。（在 Windows 中使用 **全部提取**）
+    2. 将镜像存储在服务器上的 **isos** 共享中。
+    3. 确保在 **设置 > VM 管理器** 中启用了 **启用 VM**。
+    4. 创建新的虚拟机：**VMS > 添加 VM**。
+    5. 选择类型 **Linux** 并给 VM 一个名称和描述。
+    6. 选择您想让 VM 使用的 CPU 核心并分配一些内存。
+    7. 在 **主虚拟磁盘位置** 下，选择 **手动** 然后选择 qcow2 镜像。
+    8. 在 **VM 控制台键盘** 下选择您的键盘语言。
+    9. 在 **网络源** 下选择 **br0**。
+    10. 在 **网络模型** 下选择 **virtio**。
+    11. 选择您想要传递给 Home Assistant 的任何 USB 设备，例如 Zigbee 或 Z-Wave 控制器。
+    12. 取消选择 **创建后启动 VM**。
+    13. 选择 **创建**。
+    14. 选择新 VM 的名称并选择磁盘的容量数字。在这里，您可以根据需要扩展磁盘。默认为 32 GB。
+    15. 选择新 VM 的图标并选择 **使用控制台启动 (VNC)**。
+
+  </TabsContent>
+  <TabsContent value="3">
+
+    1. 在 `virt-manager` 中创建新的虚拟机。
+    2. 选择 **导入现有磁盘镜像**，提供上面 QCOW2 镜像的路径。
+    3. 选择 **通用默认** 作为操作系统。
+    4. 勾选 **安装前自定义配置** 的复选框。
+    5. 在 **网络选择** 下，选择您的桥接。
+    6. 在自定义中选择 **概述 > 固件 > UEFI x86_64: …**。确保选择非安全启动版本的 OVMF（不包含 `secure`、`secboot` 等词），例如 `/usr/share/edk2/ovmf/OVMF_CODE.fd`。
+    7. 点击 **添加硬件**（左下角），选择 **通道**。
+    8. 选择设备类型：**unix**。
+    9. 选择名称：**org.qemu.guest_agent.0**。
+    10. 最后，选择 **开始安装**（左上角）。
+
+  </TabsContent>
+    <TabsContent value="4">
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi
+    ```
+    如果您有要附加的 USB 设备，需要添加选项 `--hostdev busID.deviceId`。您可以通过 `lsusb` 命令发现这些 ID。例如，如果 `lsusb` 输出是：
+    ```
+    Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 003 Device 004: ID 30c9:0052 Luxvisions Innotech Limited Integrated RGB Camera
+    Bus 003 Device 003: ID 1a86:55d4 QinHeng Electronics SONOFF Zigbee 3.0 USB Dongle Plus V2
+    Bus 003 Device 002: ID 06cb:00fc Synaptics, Inc.
+    Bus 003 Device 005: ID 8087:0033 Intel Corp.
+    Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+    Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    ```
+    您可以在 `Bus 003 Device 003` 处识别 Sonoff 设备。因此，安装 VM 的命令将变为：
+
+    ```
+    virt-install --name haos --description "Home Assistant OS" --os-variant=generic --ram=4096 --vcpus=2 --disk <PATH TO QCOW2 FILE>,bus=scsi --controller type=scsi,model=virtio-scsi --import --graphics none --boot uefi --hostdev 003.003
+    ```
+
+    请注意，此配置（总线 003，设备 003）只是一个示例，您的设备可能在另一个总线和/或具有另一个设备 ID。请使用 `lsusb` 检查您的 USB 设备的正确 ID。
+
+  </TabsContent>
+
+  <TabsContent value='5'>
+    1. 启动 VMware Workstation 并选择 **创建新的虚拟机**。
+        - 注意：下面设置的确切名称和位置取决于 VMware 版本。此过程基于版本 17。
+    2. 选择 **我稍后将安装操作系统**，然后选择 **Linux > 其他 Linux 5.x 内核 64 位**。
+    3. 给 VM 一个名称，`home-assistant`，并定义一个易于访问的存储位置，例如 `C:\home-assistant`。
+    4. 指定磁盘大小并选择 **将虚拟磁盘存储为单个文件**。
+    5. 选择 **自定义硬件**。
+    6. 定义 VM 允许使用的内存量和核心数。
+    7. 删除 **新 CD/DVD** 条目。它不会被使用。
+    8. 连接以太网电缆并确保它连接到您的网络。
+    9. 在 **网络适配器** 下，选择 **桥接：直接连接到物理网络**。
+        - 确保 **复制物理网络连接状态** 未选中。
+        - 选择 **配置适配器**。
+        - 确保所有虚拟适配器和蓝牙设备都未选中。
+        - 选择您的主机网络适配器。很可能，这是列表中前 2 个复选框之一：
+            - 选择用于以太网的。
+            - 这些适配器的确切名称取决于您的硬件。
+
+    10. 在向导结束时，选择 **完成**。
+    
+    ## 编辑 VM 设置
+    11. 在 Windows 资源管理器中，导航到新创建的 VM 的存储位置，例如在 `C:\home-assistant` 下。
+    12. 删除 `home-assistant.vmdk` 文件。
+    13. 在 `Downloads` 文件夹中，找到 `haos_ova_xx.x.vmdk` 文件。
+        - 如果您尚未解压存档，请解压它。
+        - 在文件夹中，找到 `.vmdk` 文件并将其重命名为 `home-assistant.vmdk`。
+        - 将文件（不是解压的文件夹）粘贴到 `C:\home-assistant` 文件夹中。
+    14. 右键单击 `.vmx` 文件并选择 **打开方式 > 记事本**。
+    15. 在 `.encoding` 下，添加一行。输入 `firmware = "efi"`。
+    16. 现在继续下一步以启动您的 VM。
+        - 如果您看到有关侧信道缓解的消息，请选择 **确定**。
+        - 如果您看到消息说找不到 `.vmdk` 文件，在步骤 3 中，您可能粘贴了文件夹，而不是文件。重复步骤 3。
+  </TabsContent>
+
+  <TabsContent value="6">
+    Hyper-V 不支持 USB
+    1. 创建新的虚拟机。
+    2. 选择 **第 2 代**。
+    3. 选择 **连接 > 您的桥接虚拟交换机**。
+    4. 选择 **使用现有的虚拟硬盘** 并选择上面的 VHDX 文件。
+    
+    创建后，转到 **设置 > 安全** 并取消选择 **启用安全启动**。
+  </TabsContent>
+</Tabs>
+
+### 启动您的虚拟机
+
+1. 启动虚拟机。
+2. 观察 Home Assistant 操作系统的启动过程。
+
+3. 完成后，您将能够在 [homeassistant.local:8123](http://homeassistant.local:8123/) 访问 Home Assistant。如果您运行的是较旧版本的 Windows 或具有更严格的网络配置，您可能需要通过 [homeassistant:8123](http://homeassistant:8123/) 或 `http://X.X.X.X:8123` 访问 Home Assistant（将 X.X.X.X 替换为您的虚拟机的 IP 地址）。
+
+安装并可以访问 Home Assistant 操作系统后，您可以继续进行初始化设置。
+
+## 安装 Home Assistant Core
+
+### 安装 WSL
+
+要在 Windows 上安装 Home Assistant Core，您需要使用 Windows Subsystem for Linux (WSL)。按照 [WSL 安装说明](https://docs.microsoft.com/windows/wsl/install-win10) 并从 Windows 应用商店安装 Ubuntu。
+
+作为替代方案，Home Assistant OS 可以安装在 Linux 客户机 VM 中。不支持直接在 Windows 上运行 Home Assistant Core。
+
+:::danger 警告
+这是一个高级安装过程，某些步骤可能与您的系统不同。考虑到这种安装类型的性质，我们假设您可以处理本文档与您使用的系统配置之间的细微差异。如有疑问，请考虑使用[其他安装方法](./index.mdx)，因为它们可能更适合。
+:::
+
+### 先决条件
+
+本指南假设您已经设置了操作系统并安装了 Python 3.13（包括包 `python3-dev`）或更新版本。
+
+### 安装依赖项
+
+在开始之前，请确保您的系统完全更新，本指南中的所有包都使用 `apt` 安装，如果您的操作系统没有，请寻找替代方案。
+
+```
+sudo apt-get update
+sudo apt-get upgrade -y
+```
+
+安装依赖项：
+
+```
+sudo apt-get install -y python3 python3-dev python3-venv python3-pip bluez libffi-dev libssl-dev libjpeg-dev zlib1g-dev autoconf build-essential libopenjp2-7 libtiff6 libturbojpeg0-dev tzdata ffmpeg liblapack3 liblapack-dev libatlas-base-dev
+```
+
+上述列出的依赖项可能因您的系统或个人使用 Home Assistant 而有所不同或缺失。
+
+### 创建账户
+
+添加一个名为 `homeassistant` 的 Home Assistant Core 账户。由于此账户仅用于运行 Home Assistant Core，因此添加了 `-rm` 额外参数以创建系统账户并创建主目录。参数 `-G dialout,gpio,i2c` 将用户添加到 `dialout`、`gpio` 和 `i2c` 组。第一个是使用 Z-Wave 和 Zigbee 控制器所必需的，而第二个是与 GPIO 通信所必需的。
+
+```
+sudo useradd -rm homeassistant -G dialout,gpio,i2c
+```
+
+### 创建虚拟环境
+
+首先，我们将为 Home Assistant Core 的安装创建一个目录，并将所有者更改为 `homeassistant` 账户。
+
+```
+sudo mkdir /srv/homeassistant
+sudo chown homeassistant:homeassistant /srv/homeassistant
+```
+
+接下来是创建并切换到 Home Assistant Core 的虚拟环境。这将作为 `homeassistant` 账户完成。
+
+```
+sudo -u homeassistant -H -s
+cd /srv/homeassistant
+python3 -m venv .
+source bin/activate
+```
+
+一旦您激活了虚拟环境（注意提示更改为 (`homeassistant`) `homeassistant@raspberrypi:/srv/homeassistant $`），您需要运行以下命令来安装所需的 Python 包。
+
+```
+python3 -m pip install wheel
+```
+
+一旦您安装了所需的 Python 包，现在就是安装 Home Assistant Core 的时候了！
+
+```
+pip3 install homeassistant==2025.3.4
+```
+
+**故障排除**：如果您在环境中看不到上述版本的 Home Assistant 包，请确保您已安装正确的 Python 版本，如先决条件中定义的那样。
+
+首次启动 Home Assistant Core。这将为您完成安装，自动在 `/home/homeassistant` 目录中创建 `.homeassistant` 配置目录，并安装任何基本依赖项。
+
+```
+hass
+```
+
+您现在可以通过 Web 界面访问您的安装，地址为 `http://homeassistant.local:8123`。
+
+如果此地址不起作用，您也可以尝试 `http://localhost:8123` 或 `http://X.X.X.X:8123`（将 X.X.X.X 替换为您机器的 IP 地址）。
+
+:::note
+
+当您第一次运行 `hass` 命令时，它将下载、安装和缓存必要的库/依赖项。此过程可能需要 5 到 10 分钟。在此期间，访问 Web 界面时可能会出现**无法访问站点**错误。这只会发生在第一次。后续重启会快得多。
+
+:::

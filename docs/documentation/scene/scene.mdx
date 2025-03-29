@@ -1,0 +1,122 @@
+---
+
+---
+
+import { Separator } from "../../../src/components/ui/separator"
+
+
+# 场景
+<p className="text-xl font-semibold">你可以创建场景来捕捉你希望特定实体处于的状态。例如，场景可以指定灯A应该打开，灯B应该是亮红色。</p>
+
+```yaml
+# Example configuration.yaml entry
+scene:
+  - name: Romantic
+    entities:
+      light.tv_back_light: "on"
+      light.ceiling:
+        state: "on"
+        xy_color: [0.33, 0.66]
+        brightness: 200
+  - name: Movies
+    entities:
+      light.tv_back_light:
+        state: "on"
+        brightness: 125
+      light.ceiling: off
+      media_player.sony_bravia_tv:
+        state: "on"
+        source: HDMI 1
+```
+
+## 如何配置你的场景
+
+在你的YAML文件中定义场景时，请确保使用下面列出的所有必需参数。
+
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+### 配置变量 
+<p className="m-0 pb-2" style={{margin:'0'}}>name <span className="text-xs text-red-400">string (必需)</span></p>
+<p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>场景的友好名称。</p>
+<Separator className="my-4" />
+
+<p className="m-0 pb-2" style={{margin:'0'}}>entities <span className="text-xs text-red-400">list (必需)</span></p>
+<p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>要控制的实体及其期望状态。</p>
+
+</div>
+
+如你所见，有两种方式定义每个`entity_id`的状态：
+
+- 直接用实体定义`state`。请注意，必须定义`state`。
+
+- 使用属性定义复杂状态。你可以在`developer-tools -> state`下查看特定实体的所有可用属性。
+
+场景可以使用`scene.turn_on`动作激活（没有'scene.turn_off'动作）。
+
+```yaml
+# Example automation
+automation:
+  triggers:
+    - trigger: state
+      entity_id: device_tracker.sweetheart
+      from: "not_home"
+      to: "home"
+  actions:
+    - action: scene.turn_on
+      target:
+        entity_id: scene.romantic
+```
+
+## 应用未定义的场景
+
+使用`scene.apply`动作，你可以应用未通过配置预先定义的场景。相反，你可以将状态作为数据的一部分传递。数据格式与配置中的`entities`字段相同。
+
+```yaml
+# Example automation
+automation:
+  triggers:
+    - trigger: state
+      entity_id: device_tracker.sweetheart
+      from: "not_home"
+      to: "home"
+  actions:
+    - action: scene.apply
+      data:
+        entities:
+          light.tv_back_light:
+            state: "on"
+            brightness: 100
+          light.ceiling: off
+          media_player.sony_bravia_tv:
+            state: "on"
+            source: "HDMI 1"
+```
+## 使用场景过渡
+
+`scene.apply`和`scene.turn_on`动作都支持设置过渡，这使你能够平滑地过渡到场景。
+
+这是一个设置浪漫场景的自动化示例，其中灯光将在2.5秒内过渡到场景。
+
+```yaml
+# Example automation
+automation:
+  triggers:
+    - trigger: state
+      entity_id: device_tracker.sweetheart
+      from: "not_home"
+      to: "home"
+  actions:
+    - action: scene.turn_on
+      target:
+        entity_id: scene.romantic
+      data:
+        transition: 2.5
+```
+
+目前过渡仅由灯光支持，而灯光本身也必须支持此功能。然而，场景本身不必仅由灯光组成就可以设置过渡。
+
+## 重新加载场景
+
+每当你对场景配置进行更改时，你可以调用`scene.reload`动作来重新加载场景。
+
+
