@@ -1,0 +1,51 @@
+---
+sidebar_label: 基础自动化
+---
+
+# 理解自动化
+
+<p className="text-xl">所有自动化都由触发器和动作组成，可以选择性地添加条件。以这个自动化为例：</p> 
+
+<p className="text-xl italic">"当 Paulus 到家且太阳已经落山时：打开客厅的灯光。"</p>
+
+我们可以将这个自动化分解为以下三个部分：
+
+```
+(触发器)    当 Paulus 到家
+(条件)      且太阳已经落山：
+(动作)      打开客厅的灯光
+```
+
+第一部分是自动化规则的[触发器](https://www.home-assistant.io/docs/automation/trigger/)。触发器描述了应该触发自动化规则的事件。在这个例子中，是一个人到家，这可以通过观察 Paulus 的状态从 `not_home` 变为 `home` 来检测。
+
+第二部分是[条件](https://www.home-assistant.io/docs/automation/condition/)。条件是可选测试，可以限制自动化规则只在特定用例中工作。条件会测试系统的当前状态，包括当前时间、设备、人员和其他因素，如太阳位置。在这个例子中，我们只想在太阳落山后执行动作。
+
+第三部分是[动作](https://www.home-assistant.io/docs/automation/action/)，当规则被触发且所有条件都满足时执行。例如，它可以打开灯光、设置恒温器温度或激活场景。
+
+:::note 
+
+条件和触发器之间的区别可能会让人困惑，因为它们非常相似。触发器关注动作，而条件关注当前状态：打开灯光与灯光已开启。
+
+:::
+
+## 探索内部状态
+
+自动化规则直接与 Home Assistant 的内部状态交互，因此您需要熟悉它。Home Assistant 通过开发者工具暴露其当前状态。这些工具在前端侧边栏底部可用。[开发者工具 > 状态](https://my.home-assistant.io/redirect/developer_states)将显示所有当前可用的状态。实体可以是任何东西：灯光、开关、人员，甚至是太阳。状态由以下部分组成：
+
+| 名称 | 描述 | 示例 | 
+| --- | --- | --- |
+| 实体 ID | 实体的唯一标识符。 | `light.kitchen` |
+| 状态 | 设备的当前状态。 | `home` |
+| 属性 | 与设备和/或当前状态相关的额外数据。 | `brightness` |
+
+状态变化可以用作触发器的来源，当前状态可以用于条件中。
+
+要探索可用的动作，请打开[开发者工具 > 动作](https://my.home-assistant.io/redirect/developer_services)。动作允许改变任何东西。例如，打开灯光、运行脚本或启用场景。每个动作都有一个域和一个名称。例如，动作 `light.turn_on` 可以打开系统中的任何灯光。可以向动作传递参数，以指示要激活的设备或使用的颜色。
+
+## 创建自动化
+
+现在您已经初步了解了可能的功能，是时候开始创建您的第一个自动化了。
+
+### <span className="underline text-xl uppercase">[使用自动化编辑器 »](./editor)</span>
+
+

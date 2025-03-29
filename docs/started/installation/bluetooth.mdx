@@ -1,0 +1,31 @@
+---
+sidebar_class_name: hidden
+---
+
+# Bluetooth
+
+<p className="text-xl">The **Bluetooth** integration will detect nearby Bluetooth devices. Discovered devices will show up in the discovered section on the integrations page in the configuration panel.</p>
+
+## Configuration 
+
+To add the **Bluetooth** integration to your Home Assistant instance, use this My button:
+
+[添加 integration](https://my.home-assistant.io/redirect/config_flow_start?domain=bluetooth)
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../../../src/components/ui/accordion"
+
+<Accordion type="single" collapsible className="w-full">
+  <AccordionItem value="item-1">
+    <AccordionTrigger> Manual configuration steps </AccordionTrigger>
+    <AccordionContent>
+    If the above My button doesn’t work, you can also perform the following steps manually:
+    - Browse to your Home Assistant instance.
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+

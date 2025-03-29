@@ -1,0 +1,256 @@
+---
+sidebar_label: 模板
+---
+
+# 自动化触发器变量
+
+<p className="font-semibold text-xl">自动化支持与脚本相同方式的[模板](https://www.home-assistant.io/docs/configuration/templating/)。除了脚本可用的[Home Assistant模板扩展](https://www.home-assistant.io/docs/configuration/templating/#home-assistant-template-extensions)外，还提供了`trigger`和`this`模板变量。</p>
+
+在评估配置中声明的任何`trigger_variables`时，模板变量`this`也可用。
+
+## 可用的this数据 
+
+变量`this`是触发动作时自动化的[状态对象](https://www.home-assistant.io/docs/configuration/state_object)。状态对象还包含上下文数据，可用于识别导致脚本或自动化执行的用户。请注意，在执行动作时，`this`不会改变。
+
+## 可用的触发器数据 
+
+变量`trigger`是一个包含有关哪个触发器触发了自动化的详细信息的对象。
+
+模板可以使用数据来修改自动化执行的动作或显示在消息中。例如，您可以创建一个多个传感器可以触发的自动化，然后使用传感器的位置来指定要激活的灯光；或者您可以发送一个包含触发它的传感器友好名称的通知。
+
+每个[触发器平台](https://www.home-assistant.io/docs/automation/trigger/#event-trigger)可以包含特定于该平台的额外数据。
+
+### 全部通用
+
+所有平台的触发器都将包含以下数据。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.alias`|触发器的别名。|
+|`trigger.id`|触发器的[ID](https://www.home-assistant.io/docs/automation/trigger/#trigger-id)。|
+|`trigger.idx`|触发器的索引。（第一个触发器idx是`0`。）|
+
+### 日历
+
+这些是[日历触发器](https://www.home-assistant.io/docs/automation/trigger/#calendar-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`calendar`|
+|`trigger.event` | 触发事件类型，可以是`start`或`end`|
+|`trigger.calendar_event`|匹配的日历事件对象。|
+|`trigger.calendar_event.summary`|日历事件的标题或摘要。|
+|`trigger.calendar_event.start`|日历事件的开始日期或日期时间的字符串表示，例如`2022-04-10`或`2022-04-10 11:30:00-07:00`|
+|`trigger.calendar_event.end`|日历事件在UTC中的结束时间或日期时间的字符串表示，例如`2022-04-11`或`2022-04-10 11:45:00-07:00`|
+|`trigger.calendar_event.all_day`|表示事件跨越整天。|
+|`trigger.calendar_event.description`|日历事件的详细描述（如果有）。|
+|`trigger.calendar_event.location`|日历事件的位置信息（如果有）。|
+|`trigger.offset`|与事件的时间差对象（如果有）|
+
+### 设备
+
+这些是[设备触发器](https://www.home-assistant.io/docs/automation/trigger/#device-triggers)可用的属性。
+
+继承基于为设备选择的触发器类型的[事件](https://www.home-assistant.io/docs/automation/templating/#event)或[状态](https://www.home-assistant.io/docs/automation/templating/#state)模板中的模板变量。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`device`。|
+
+### 事件 
+这些是[事件触发器](https://www.home-assistant.io/docs/automation/trigger/#event-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`event`。|
+|`trigger.event`|匹配的事件对象。|
+|`trigger.event.event_type`|事件类型。|
+|`trigger.event.data`|可选的事件数据。|
+
+### MQTT 
+这些是[MQTT触发器](https://www.home-assistant.io/docs/automation/trigger/#mqtt-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`mqtt`。|
+|`trigger.topic`|接收负载的主题。|
+|`trigger.payload`|负载。|
+|`trigger.payload_json`|JSON解析负载的字典。|
+|`trigger.qos`|负载的QOS。|
+
+### 数值状态 
+这些是[数值状态触发器](https://www.home-assistant.io/docs/automation/trigger/#numeric-state-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`numeric_state`|
+|`trigger.entity_id`|我们观察的实体ID。|
+|`trigger.below`|低于阈值（如果有）。|
+|`trigger.above`|高于阈值（如果有）。|
+|`trigger.from_state`|实体的前一个[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.to_state`|触发触发器的新[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.for`|状态满足高于/低于条件的时间长度（如果有）。|
+
+### 句子 
+这些是[句子触发器](https://www.home-assistant.io/docs/automation/trigger/#sentence-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`conversation`|
+|`trigger.sentence`|匹配的句子文本|
+|`trigger.slots`|带有匹配槽值的对象|
+|`trigger.details`|按名称匹配的槽详细信息对象，如[通配符](https://www.home-assistant.io/docs/automation/trigger/#sentence-wildcards)。每个详细信息包含：<br/>`name` - 槽的名称<br/>`text` - 匹配的文本<br/>`value` - 输出值（参见[列表](https://developers.home-assistant.io/docs/voice/intent-recognition/template-sentence-syntax/#lists)）|
+|`trigger.device_id`|捕获命令的设备ID（如果有）。|
+
+### 状态 
+这些是[状态触发器](https://www.home-assistant.io/docs/automation/trigger/#state-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`state`|
+|`trigger.entity_id`|我们观察的实体ID。|
+|`trigger.from_state`|实体的前一个[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.to_state`|触发触发器的新[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.for`|状态已处于该状态的时间长度（如果有）。|
+
+### 太阳 
+这些是[太阳触发器](https://www.home-assistant.io/docs/automation/trigger/#sun-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`sun`|
+|`trigger.event`|刚刚发生的事件：`sunset`或`sunrise`。|
+|`trigger.offset`|与事件的时间差对象（如果有）。|
+
+### 模板 
+这些是[模板触发器](https://www.home-assistant.io/docs/automation/trigger/#template-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`template`|
+|`trigger.entity_id`|导致变化的实体ID。|
+|`trigger.from_state`|导致变化的实体的前一个[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.to_state`|导致模板变化的实体的新[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.for`|状态已处于该状态的时间长度（如果有）。|
+
+### 时间 
+这些是[时间触发器](https://www.home-assistant.io/docs/automation/trigger/#time-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`time`|
+|`trigger.now`|触发时间触发器的DateTime对象。|
+
+### 时间模式 
+这些是[时间模式触发器](https://www.home-assistant.io/docs/automation/trigger/#time-pattern-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`time_pattern`|
+|`trigger.now`|触发time_pattern触发器的DateTime对象。|
+
+### 持久通知 
+这些是[持久通知触发器](https://www.home-assistant.io/docs/automation/trigger/#persistent-notification-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`persistent_notification`|
+|`trigger.update_type`|持久通知更新类型`added`、`removed`、`current`或`updated`。|
+|`trigger.notification`|触发持久通知触发器的通知对象。|
+|`trigger.notification.notification_id`|通知ID|
+|`trigger.notification.title`|通知的标题|
+|`trigger.notification.message`|通知的消息|
+|`trigger.notification.created_at`|指示通知创建时间的DateTime对象。|
+
+### Webhook 
+这些是[Webhook触发器](https://www.home-assistant.io/docs/automation/trigger/#webhook-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`webhook`|
+|`trigger.webhook_id`|被触发的webhook ID。|
+|`trigger.json`|请求的JSON数据（如果它有JSON内容类型）作为映射。|
+|`trigger.data`|请求的表单数据（如果它有表单数据内容类型）。|
+|`trigger.query`|请求的URL查询参数（如果提供）。|
+
+### 区域 
+这些是[区域触发器](https://www.home-assistant.io/docs/automation/trigger/#zone-trigger)可用的属性。
+
+|模板变量 |数据 |
+|---|---|
+|`trigger.platform`|硬编码：`zone`|
+|`trigger.entity_id`|我们观察的实体ID。|
+|`trigger.from_state`|实体的前一个[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.to_state`|实体的新[状态对象](https://www.home-assistant.io/docs/configuration/state_object/)。|
+|`trigger.zone`|区域的状态对象|
+|`trigger.event`|触发器观察到的事件：`enter`或`leave`。|
+
+## 示例
+
+```yaml
+# configuration.yaml条目示例
+automation:
+  triggers:
+    - trigger: state
+      entity_id: device_tracker.paulus
+      id: paulus_device
+  actions:
+    - action: notify.notify
+      data:
+        message: >
+          Paulus刚刚从{{ trigger.from_state.state }}
+          变成了{{ trigger.to_state.state }}
+
+          这是由{{ trigger.id }}触发的
+
+automation 2:
+  triggers:
+    - trigger: mqtt
+      topic: "/notify/+"
+  actions:
+    - action: >
+        notify.{{ trigger.topic.split('/')[-1] }}
+      data:
+        message: "{{ trigger.payload }}"
+
+automation 3:
+  triggers:
+    # 您想对其执行相同操作的多个实体。
+    - trigger: state
+      entity_id:
+        - light.bedroom_closet
+        - light.kiddos_closet
+        - light.linen_closet
+      to: "on"
+      # 当有人将其中一盏灯开着10分钟时触发。
+      for: "00:10:00"
+  actions:
+    - action: light.turn_off
+      target:
+        # 关闭触发自动化的实体。
+        entity_id: "{{ trigger.entity_id }}"
+
+automation 4:
+  triggers:
+    # 当Home Assistant扫描NFC标签时...
+    - trigger: event
+      event_type: tag_scanned
+      # ...由特定人员
+      context:
+        user_id:
+          - 06cbf6deafc54cf0b2ffa49552a396ba
+          - 2df8a2a6e0be4d5d962aad2d39ed4c9c
+  conditions:
+    # 检查NFC标签（ID）是前门旁边的那个
+    - condition: template
+      value_template: "{{ trigger.event.data.tag_id == '8b6d6755-b4d5-4c23-818b-cf224d221ab7'}}"
+  actions:
+    # 关闭各种灯光
+    - action: light.turn_off
+      target:
+        entity_id:
+          - light.kitchen
+          - light.bedroom
+          - light.living_room
+```
+

@@ -1,0 +1,112 @@
+---
+sidebar_label: Entity
+---
+
+import { Pencil, EllipsisVertical } from 'lucide-react'
+import { Separator } from "../../../src/components/ui/separator"
+
+# Entity card
+
+<p className="text-xl font-semibold">
+The entity card gives you a quick overview of your entity’s state.
+</p>
+
+
+![Screenshot of the Entity card.](./img/entity_1.png)
+<p className='text-center font-extralight'>Screenshot of the Entity card.</p>
+
+To add the entity card to your user interface:
+
+1. In the top right of the screen, select the edit <Pencil className='align-middle inline ' size={18}  />  button.
+    - If this is your first time editing a dashboard, the **Edit dashboard** dialog appears.
+        - By editing the dashboard, you are taking over control of this dashboard.
+        - This means that it is no longer automatically updated when new dashboard elements become available.
+        - Once you’ve taken control, you can’t get this specific dashboard back to update automatically. However, you can create a new default dashboard.
+        - To continue, in the dialog, select the three dots <EllipsisVertical className='align-middle inline' size={18} />  menu, then select **Take control**.
+
+2. [Add a card and customize actions and features](https://www.home-assistant.io/dashboards/cards/#adding-cards-to-your-dashboard) to your dashboard.
+
+All options for this card can be configured via the user interface.
+
+## YAML configuration 
+
+The following YAML options are available when you use YAML mode or just prefer to use YAML in the code editor in the UI.
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### Configuration Variables  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> type <span className="text-xs text-red-400">string Required</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`entity`</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> entity <span className="text-xs text-red-400">string Required</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Entity ID.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> name <span className="text-xs text-gray-400">string (Optional, default: Entity name.)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Name of entity.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> icon <span className="text-xs text-gray-400">string (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Overwrites icon.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> state_color <span className="text-xs text-gray-400">boolean (Optional, default: false)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Set to `true` to have icon colored when entity is active.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> attribute <span className="text-xs text-gray-400">string (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>An attribute associated with the `entity`.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> unit <span className="text-xs text-gray-400">string (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Unit of measurement given to data.</p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Default: Unit of measurement given by entity.</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> theme <span className="text-xs text-gray-400">string (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Override the used theme for this card with any loaded theme. For more information about themes, see the [frontend documentation](https://www.home-assistant.io/integrations/frontend/).</p>
+        <Separator className="my-4" />
+    </div>
+
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}> footer <span className="text-xs text-gray-400">map (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>Footer widget to render. See [footer documentation](https://www.home-assistant.io/dashboards/header-footer/).</p>
+    </div>
+</div>
+
+### Example
+
+```yaml
+- type: entity
+  entity: cover.kitchen_window
+- type: entity
+  entity: light.bedroom
+  attribute: brightness
+  unit: "%"
+- type: entity
+  entity: vacuum.downstairs
+  name: Vacuum
+  icon: "mdi:battery"
+  attribute: battery_level
+  unit: "%"
+```
+
+## Related topics
+- [Themes](https://www.home-assistant.io/integrations/frontend/)
+- [Card header and footer](https://www.home-assistant.io/dashboards/header-footer/)
+- [Dashboard cards](https://www.home-assistant.io/dashboards/cards/)

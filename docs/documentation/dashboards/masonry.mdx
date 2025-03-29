@@ -1,0 +1,33 @@
+---
+sidebar_label: Masonry
+---
+
+# Masonry view
+import { Separator } from "../../../src/components/ui/separator"
+
+<p className="text-xl font-semibold">
+The masonry view sorts cards in columns based on their card size.
+</p>
+
+![Screenshot of the masonry view.](./img/masonry_1.png)
+<p className="text-center font-extralight">Screenshot of the masonry view.</p>
+
+Masonry sorts cards in columns based on size and places the next card below the smallest card on the dashboard.
+
+![Masonry arranges cards based on size.](./img/masonry_2.png)
+<p className="text-center font-extralight">Masonry arranges cards based on size.</p>
+
+To group cards, you have to use [horizontal stack](https://www.home-assistant.io/dashboards/horizontal-stack/), [vertical stack](https://www.home-assistant.io/dashboards/vertical-stack/), or [grid](https://www.home-assistant.io/dashboards/grid/) cards.
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### Configuration Variables  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>type <span className="text-xs text-gray-400">string (Optional)</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`masonry`</p>
+        {/* <Separator className="my-4" /> */}
+    </div>
+</div>
+
+## Related topics
+- [Panel view](https://www.home-assistant.io/dashboards/panel/)
+- [Sidebar view](https://www.home-assistant.io/dashboards/sidebar/)

@@ -1,0 +1,32 @@
+---
+sidebar_label: Panel
+---
+
+import { Separator } from "../../../src/components/ui/separator"
+
+
+# Panel View
+
+<p className="text-xl font-semibold">
+The panel view must have exactly one card. This card is rendered full-width.
+</p>
+
+![Screenshot of the panel view.](./img/panel_1.png)
+<p className="text-center font-extralight">Screenshot of the panel view.</p>
+
+This view doesn’t have support for badges.
+
+This view is good when using cards like [map](https://www.home-assistant.io/dashboards/map/), [horizontal stack](https://www.home-assistant.io/dashboards/horizontal-stack/), [vertical stack](https://www.home-assistant.io/dashboards/vertical-stack/), [picture elements](https://www.home-assistant.io/dashboards/picture-elements/), or [picture glance](https://www.home-assistant.io/dashboards/picture-glance/).
+
+<div className="bg-white p-6 rounded-2xl border border-[rgba(0,0,0,0.12)] mb-4">
+#### Configuration Variables  
+    <div>
+        <p className="m-0 pb-2" style={{margin:'0'}}>type <span className="text-xs text-red-400">string Required</span></p>
+        <p className="text-sm text-gray-400 m-0" style={{margin:'0'}}>`panel`</p>
+        {/* <Separator className="my-4" /> */}
+    </div>
+</div>
+
+## Related topics
+- [Masonry view](https://www.home-assistant.io/dashboards/masonry/)
+- [Sidebar view](https://www.home-assistant.io/dashboards/sidebar/)

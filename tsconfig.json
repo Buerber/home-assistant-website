@@ -1,0 +1,14 @@
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@site/*": [
+        "./*"
+      ], // Docusaurus's path alias
+      "@/*": [
+        "./src/*"
+      ] // Shadcn UI's expected path alias
+    }
+  }
+}

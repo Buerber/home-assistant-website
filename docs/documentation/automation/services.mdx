@@ -1,0 +1,54 @@
+---
+sidebar_label: 自动化操作(actions)
+---
+
+# 自动化操作(actions)
+
+<p className="text-xl font-semibold">自动化集成有控制自动化的操作，如打开和关闭自动化。如果您想从另一个自动化中禁用一个自动化，这将非常有用。</p>
+
+## 操作 [automation.turn_on](https://my.home-assistant.io/redirect/developer_call_service?service=automation.turn_on)
+
+此操作启用自动化的触发器。
+
+|数据属性 |	可选 |	描述 |
+|---|---|---|
+|`entity_id`|	否	| 要打开的自动化的实体ID。可以是一个列表。也接受`none`或`all`。 |
+
+## 操作 [automation.turn_off](https://my.home-assistant.io/redirect/developer_call_service?service=automation.turn_off)
+
+此操作禁用自动化的触发器，并可选择停止任何当前活动的操作。
+
+|数据属性 |	可选 |	描述 |
+|---|---|---|
+|`entity_id`|	否	| 要关闭的自动化的实体ID。可以是一个列表。也接受`none`或`all`。 |
+|`stop_actions` | 是 | 停止任何当前活动的操作（默认为true）。|
+
+## 操作 [`automation.toggle`](https://my.home-assistant.io/redirect/developer_call_service?service=automation.toggle)
+
+如果触发器被禁用，此操作将启用自动化的触发器；如果触发器被启用，此操作将禁用自动化的触发器并停止任何当前活动的操作。
+
+|数据属性 |	可选 |	描述 |
+|---|---|---|
+|`entity_id`|	否	| 要切换的自动化的实体ID。可以是一个列表。也接受`none`或`all`。 |
+
+## 操作 [`automation.trigger`](https://my.home-assistant.io/redirect/developer_call_service?service=automation.trigger)
+
+此操作将触发自动化的操作。默认情况下，它会绕过任何条件，但可以通过`skip_condition`属性进行更改。
+
+|数据属性 |	可选 |	描述 |
+|---|---|---|
+|`entity_id`|	否	| 要触发的自动化的实体ID。可以是一个列表。也接受`none`或`all`。 |
+|`skip_condition` | 是 | 是否跳过条件（默认为true）。|
+
+## 操作 [`automation.reload`](https://my.home-assistant.io/redirect/developer_call_service?service=automation.reload)
+
+_此操作仅在您在YAML中创建/编辑自动化时才需要。通过UI的自动化会自动执行此操作。_
+
+此操作重新加载所有自动化，停止所有当前活动的自动化操作。
+
+
+
+
+
+
+
