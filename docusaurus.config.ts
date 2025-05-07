@@ -11,7 +11,7 @@ const config: Config = {
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: "https://home-assistant.buerber.cn",
+  url: "https://www.home-assistants.cn",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
@@ -69,10 +69,18 @@ const config: Config = {
     // Replace with your project's social card
     image: "img/docusaurus-social-card.jpg",
     metadata: [
-      { name: 'keywords', content: 'home-assistant,home-assistants, 智能家居, 智慧家庭, home assistant文档, open source' },
-      { name: 'author', content:'Buerber'},
-      { name:'description', content:'Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a...'},
-      { name: 'baidu-site-verification', content: 'codeva-bbdnFo3p8K' }
+      {
+        name: "keywords",
+        content:
+          "home-assistant,home-assistants, 智能家居, 智慧家庭, home assistant文档, open source",
+      },
+      { name: "author", content: "Buerber" },
+      {
+        name: "description",
+        content:
+          "Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a...",
+      },
+      { name: "baidu-site-verification", content: "codeva-bbdnFo3p8K" },
     ],
     navbar: {
       title: "Home Assistant 中文网",
@@ -91,13 +99,13 @@ const config: Config = {
           type: "docSidebar",
           sidebarId: "documentation",
           position: "right",
-          items:[
+          items: [
             {
-              label:"安装教程",
-              position:'left',
+              label: "安装教程",
+              position: "left",
               type: "docSidebar",
               sidebarId: "installation",
-            }
+            },
           ],
           label: "文档",
         },
@@ -124,13 +132,13 @@ const config: Config = {
               to: "/docs/started/installation/",
             },
             {
-              label:"自动化",
-              to:'/docs/documentation/automation/'
+              label: "自动化",
+              to: "/docs/documentation/automation/",
             },
             {
-              label:"看板",
-              to:'/docs/documentation/dashboards/'
-            }
+              label: "看板",
+              to: "/docs/documentation/dashboards/",
+            },
           ],
         },
         // {
