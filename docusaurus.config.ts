@@ -32,6 +32,14 @@ const config: Config = {
     locales: ["zh-Hans"],
   },
 
+  scripts: [
+    {
+      src: "https://app.rybbit.io/api/script.js",
+      defer: true,
+      "data-site-id": "703",
+    },
+  ],
+
   presets: [
     [
       "classic",
