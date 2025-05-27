@@ -180,7 +180,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Buerber Studio. Built with Docusaurus.`,
+      copyright: `<a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2023019693号-4</a> | Copyright © ${new Date().getFullYear()} Buerber Studio. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
